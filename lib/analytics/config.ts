@@ -1,7 +1,7 @@
 import { APP_VERSION } from "@/lib/app-info"
 
 /**
- * Base URL of the ConvertLAB web backend that receives anonymous usage statistics
+ * Base URL of the Clinexia web backend that receives anonymous usage statistics
  * (the deployed web app, which owns /api/analytics and /api/analytics/presence).
  * Set at BUILD time (the app is a static export):  NEXT_PUBLIC_ANALYTICS_URL=https://your-site.example
  * Unset = analytics are completely off (this is the default in development).

@@ -61,3 +61,8 @@ html.dark{
 /* group-tabs: sticky sub-category chips, pinned just under the 4rem app header */
 .group-tabs{top:calc(4rem + env(safe-area-inset-top));background:var(--bg);border-color:var(--line)}
 .group-tabs ::-webkit-scrollbar{display:none}
+
+/* clinexia-dark-fixes: translucent white boxes (result rows, Copy/Share buttons) turned pale grey in dark mode */
+.dark .bg-white\/70{background-color:rgba(18,28,46,.72)}
+.dark .bg-white\/60{background-color:rgba(18,28,46,.6)}
+.dark .bg-white\/80{background-color:rgba(18,28,46,.8)}

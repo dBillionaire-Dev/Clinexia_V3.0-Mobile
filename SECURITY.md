@@ -1,6 +1,6 @@
 # Security and safety policy
 
-ConvertLAB is an offline-first calculator and reference app with **no accounts** and only an optional anonymous usage count sent to the ConvertLAB web backend, so its security surface is small. It is still used in clinical settings, so we take both **security** and **patient-safety** reports seriously.
+Clinexia is an offline-first calculator and reference app with **no accounts** and only an optional anonymous usage count sent to the Clinexia web backend, so its security surface is small. It is still used in clinical settings, so we take both **security** and **patient-safety** reports seriously.
 
 ## Two kinds of report
 
@@ -26,7 +26,7 @@ This is maintained by an individual, so responses are best-effort. We aim to ack
 
 ## Supported versions
 
-ConvertLAB is pre-release. Fixes are made on the latest `main` branch, and only the most recent release will be supported once the app is published.
+Clinexia is pre-release. Fixes are made on the latest `main` branch, and only the most recent release will be supported once the app is published.
 
 ## Scope notes
 

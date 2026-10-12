@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ConvertLAB</string>
-    <string name="title_activity_main">ConvertLAB</string>
-    <string name="package_name">com.convertlab.app</string>
-    <string name="custom_url_scheme">com.convertlab.app</string>
+    <string name="app_name">Clinexia</string>
+    <string name="title_activity_main">Clinexia</string>
+    <string name="package_name">com.clinexia.app</string>
+    <string name="custom_url_scheme">com.clinexia.app</string>
 </resources>

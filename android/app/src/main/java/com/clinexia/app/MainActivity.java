@@ -1,4 +1,4 @@
-package com.convertlab.app;
+package com.clinexia.app;
 
 import com.getcapacitor.BridgeActivity;
 
