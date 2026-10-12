@@ -3,10 +3,10 @@ import "./globals.css"
 import { AppShell } from "@/components/app-shell"
 
 export const metadata: Metadata = {
-  title: { default: "ConvertLAB", template: "%s · ConvertLAB" },
-  description: "A mobile-first clinical and medical utility toolkit.",
+  title: { default: "Clinexia", template: "%s · Clinexia" },
+  description: "Clinexia: a complete clinical toolkit with medical calculators, drug dosing (mg and mL per dose), unit conversions, laboratory tools and reference ranges.",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "ConvertLAB" },
+  appleWebApp: { capable: true, statusBarStyle: "black-translucent", title: "Clinexia" },
 }
 
 export const viewport: Viewport = {

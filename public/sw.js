@@ -1,4 +1,4 @@
-const CACHE = "convertlab-v4-shell";
+const CACHE = "clinexia-v1-shell";
 const CORE = ["/", "/calculators", "/convert", "/tools", "/references", "/settings", "/about", "/estimators", "/favorites", "/history", "/icon-192x192.png"];
 self.addEventListener("install", (e) => e.waitUntil(
   caches.open(CACHE).then((c) => c.addAll(CORE)).catch(() => {}).then(() => self.skipWaiting())

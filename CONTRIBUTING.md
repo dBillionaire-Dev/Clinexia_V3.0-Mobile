@@ -1,6 +1,6 @@
-# Contributing to ConvertLAB
+# Contributing to Clinexia
 
-Thank you for helping. ConvertLAB is used for clinical and laboratory work, so we welcome code, clinical corrections, new calculators, accessibility fixes and documentation, and we hold clinical content to a higher bar than ordinary code.
+Thank you for helping. Clinexia is used for clinical and laboratory work, so we welcome code, clinical corrections, new calculators, accessibility fixes and documentation, and we hold clinical content to a higher bar than ordinary code.
 
 The full technical guide is in the [README](README.md#6-developer-guide). This file is the short version of how to contribute.
 

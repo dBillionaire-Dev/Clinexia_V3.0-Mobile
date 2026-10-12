@@ -9,8 +9,8 @@ import type { CapacitorConfig } from "@capacitor/cli"
 const devUrl = process.env.CAPACITOR_SERVER_URL
 
 const config: CapacitorConfig = {
-  appId: "com.convertlab.app",
-  appName: "ConvertLAB",
+  appId: "com.clinexia.app",
+  appName: "Clinexia",
   webDir: "out",
   backgroundColor: "#073a68",
   server: {

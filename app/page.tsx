@@ -19,6 +19,6 @@ export default function Home(){
   <div className="grid grid-cols-2 gap-3">
    {[{href:"/tools",title:"Lab Tools",sub:"Solutions, spectro & more",Icon:FlaskConical},{href:"/references",title:"References",sub:"Common lab ranges",Icon:HeartPulse},{href:"/history",title:"History",sub:"Recent calculations",Icon:Clock3},{href:"/favorites",title:"Favorites",sub:"Your pinned tools",Icon:Heart},{href:"/estimators",title:"Estimators",sub:"eGFR, BSA, IBW & more",Icon:Gauge},{href:"/settings",title:"Settings",sub:"Theme & preferences",Icon:Settings}].map(({href,title,sub,Icon})=><Link href={href} key={href} className="card p-4"><Icon size={22} className="text-blue-600"/><div className="mt-3 text-sm font-extrabold">{title}</div><div className="mt-1 text-[11px] text-slate-500">{sub}</div></Link>)}
   </div>
-  <div className="mt-4 text-center text-[11px] text-slate-400">For clinical and laboratory utility. Verify results against local SOPs and clinical context.</div>
+  <div className="mt-4 text-center text-[11px] text-slate-400">For clinical reference and educational use. Verify results against local protocols and the clinical context.</div>
  </div>
 }
