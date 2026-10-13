@@ -78,6 +78,7 @@ if grep -q '"url"' android/app/src/main/assets/capacitor.config.json 2>/dev/null
   die "android/.../capacitor.config.json contains a server url (a dev server got baked in). Run: unset CAPACITOR_SERVER_URL && pnpm exec cap sync android"
 fi
 node scripts/android-setup.mjs
+node scripts/android-icons.mjs
 
 echo "▶ 3/4  Building with Gradle (JDK: $JAVA_HOME)"
 cd android
