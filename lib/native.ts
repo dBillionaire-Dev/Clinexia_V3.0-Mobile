@@ -27,6 +27,14 @@ export async function listenBackButton(handler: (canGoBack: boolean) => void): P
   return () => { void sub.remove() }
 }
 
+/** Calls the handler every time the app comes back to the foreground (Android resume). Returns an unsubscribe function. */
+export async function listenAppActive(handler: () => void): Promise<() => void> {
+  if (!isNative()) return () => {}
+  const { App } = await import("@capacitor/app")
+  const sub = await App.addListener("appStateChange", ({ isActive }) => { if (isActive) handler() })
+  return () => { void sub.remove() }
+}
+
 export async function exitApp() {
   if (!isNative()) return
   const { App } = await import("@capacitor/app")

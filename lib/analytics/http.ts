@@ -1,6 +1,7 @@
 import { CapacitorHttp } from "@capacitor/core"
 import { isNative } from "@/lib/native"
 import { ANALYTICS_BASE_URL, ANALYTICS_ENDPOINTS } from "./config"
+import { interpretResponse, type SendResult } from "./sync"
 import type { CalculationEvent } from "./types"
 
 const TIMEOUT_MS = 8000
@@ -28,19 +29,11 @@ export function analyticsAvailable(): boolean {
   return isNative() && ANALYTICS_BASE_URL.length > 0
 }
 
-export async function sendEvents(events: CalculationEvent[]): Promise<string[] | null> {
-  const res = await post(ANALYTICS_ENDPOINTS.events, { events })
-  if (!res || res.status < 200 || res.status >= 300) return null
-  const body = typeof res.data === "string" ? safeParse(res.data) : res.data
-  const accepted = (body as { accepted?: unknown } | null)?.accepted
-  return Array.isArray(accepted) ? accepted.filter((x): x is string => typeof x === "string") : null
+export async function sendEvents(events: CalculationEvent[]): Promise<SendResult> {
+  return interpretResponse(await post(ANALYTICS_ENDPOINTS.events, { events }))
 }
 
 export async function sendPresence(payload: { anonymousId: string; source: string; environment: string; appVersion: string }): Promise<boolean> {
   const res = await post(ANALYTICS_ENDPOINTS.presence, payload)
   return !!res && res.status >= 200 && res.status < 300
-}
-
-function safeParse(text: string): unknown {
-  try { return JSON.parse(text) } catch { return null }
 }

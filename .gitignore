@@ -76,3 +76,6 @@ ios/DerivedData/
 *.bak2
 .clinexia-backups/
 keystore.properties
+
+# Clinexia fix backups
+.clinexia-fix-backup/
