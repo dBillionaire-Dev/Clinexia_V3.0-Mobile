@@ -71,7 +71,7 @@ Testers get an email. For a public join link: App Distribution → Testers & Gro
 ## 5b. Palm Store (Tecno, Infinix and itel phones)
 Palm Store is Transsion's app store, preinstalled on Tecno, Infinix and itel phones, which many clinicians and students carry. It uses the same signed build as every other channel.
 
-I could not find public documentation of the Palm Store developer portal, so confirm each step below in the console rather than assuming it matches Google Play.
+I could not find public documentation of the Palm Store developer portal, so you are advised to confirm each step below in the console rather than assuming it matches Google Play.
 1. `pnpm release:apk` to build `dist/Clinexia-<version>.apk`.
 2. Create a Palm Store developer account and complete whatever identity or company verification it asks for.
 3. Create the app with package name **`com.clinexia.app`** and upload the signed APK. Check whether it also accepts an AAB.
