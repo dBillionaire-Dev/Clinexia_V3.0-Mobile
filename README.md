@@ -134,7 +134,7 @@ Next.js 16 (App Router, static export), React 19, TypeScript (strict), Tailwind 
 pnpm install
 pnpm dev          # http://localhost:3000
 ```
-Requirements: **Node 22+**, pnpm. For Android work: **Android Studio** (SDK and JDK).
+Requirements: **Node 22+**, pnpm. For Android work: **Android Studio** (SDK and a JDK 21; Java 25 does not work with this project's Gradle, and `pnpm release:apk` picks a suitable JDK for you).
 
 | Script | Does |
 |---|---|

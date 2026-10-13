@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 # Builds the Android release.
-#   pnpm release:apk     signed APK  -> dist/Clinexia-<version>.apk  (+ .sha256)   direct download and Firebase App Distribution
+#   pnpm release:apk     signed APK  -> dist/Clinexia-<version>.apk  (+ .sha256)   direct download, Firebase App Distribution, Palm Store
 #   pnpm release:aab     signed AAB  -> dist/Clinexia-<version>.aab                Google Play
 #   pnpm release:all     both
 # DEBUG_APK=1 pnpm release:apk builds an installable DEBUG apk without a keystore (testing only, never publish it).
+# CLINEXIA_JDK_HOME=/path/to/jdk-21 forces a specific JDK. ALLOW_NO_ANALYTICS=1 allows a build that reports no usage.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -15,13 +16,13 @@ die() { echo "✗ $*" >&2; exit 1; }
 [ -z "${CAPACITOR_SERVER_URL:-}" ] || die "CAPACITOR_SERVER_URL is set. A release must bundle the app, not load your dev server. Run: unset CAPACITOR_SERVER_URL"
 command -v pnpm >/dev/null 2>&1 || die "pnpm is required."
 
-# --- JDK (Android Studio bundles one) and Android SDK
-if ! command -v java >/dev/null 2>&1 && [ -z "${JAVA_HOME:-}" ]; then
-  for d in "$HOME/android-studio/jbr" "/opt/android-studio/jbr" "/usr/local/android-studio/jbr" "/snap/android-studio/current/android-studio/jbr" "/Applications/Android Studio.app/Contents/jbr/Contents/Home"; do
-    [ -x "$d/bin/java" ] && { export JAVA_HOME="$d"; export PATH="$JAVA_HOME/bin:$PATH"; break; }
-  done
-fi
-command -v java >/dev/null 2>&1 || die "Java not found. Install Android Studio (it bundles a JDK) or set JAVA_HOME."
+# --- JDK: Gradle here runs on Java 21 to 24 (21 best). Java 25 breaks it, so never trust plain `java` on the PATH.
+# shellcheck source=scripts/find-jdk.sh
+. scripts/find-jdk.sh
+echo "▶ JDK"
+clinexia_use_jdk || exit 1
+
+# --- Android SDK
 SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 if [ -z "$SDK" ] && [ -f android/local.properties ]; then SDK="$(sed -n 's/^sdk.dir=//p' android/local.properties | head -1)"; fi
 if [ -z "$SDK" ]; then for d in "$HOME/Android/Sdk" "$HOME/Library/Android/sdk"; do [ -d "$d" ] && SDK="$d" && break; done; fi
@@ -33,12 +34,42 @@ if [ "$DEBUG" != "1" ] && [ ! -f keystore.properties ]; then
   die "No keystore.properties. Create your signing key first:  pnpm keystore:create   (or DEBUG_APK=1 for a test-only debug apk)"
 fi
 
+# --- Analytics: the app is a static export, so the backend address is fixed at BUILD time.
+# Without it the app reports nothing, and your dashboard never sees this build's users.
+ANALYTICS_URL="${NEXT_PUBLIC_ANALYTICS_URL:-}"
+if [ -z "$ANALYTICS_URL" ]; then
+  for f in .env.production.local .env.local .env.production .env; do
+    if [ -f "$f" ]; then
+      v="$(sed -n 's/^NEXT_PUBLIC_ANALYTICS_URL=//p' "$f" | tail -1 | tr -d '\r"'"'"' ')"
+      [ -n "$v" ] && { ANALYTICS_URL="$v"; break; }
+    fi
+  done
+fi
+if [ "${ALLOW_NO_ANALYTICS:-0}" != "1" ]; then
+  [ -n "$ANALYTICS_URL" ] || die "NEXT_PUBLIC_ANALYTICS_URL is not set, so this APK would report no usage. Put it in .env.production (see .env.example), or ALLOW_NO_ANALYTICS=1 to build without analytics."
+  case "$ANALYTICS_URL" in
+    https://*) ;;
+    *) die "NEXT_PUBLIC_ANALYTICS_URL must start with https:// (Android blocks plain http in release builds, so usage would never arrive). Got: $ANALYTICS_URL" ;;
+  esac
+  case "$ANALYTICS_URL" in
+    *your-web-app*|*.example|*.example/*) die "NEXT_PUBLIC_ANALYTICS_URL is still the placeholder from .env.example ($ANALYTICS_URL). Set it to your deployed web app address." ;;
+  esac
+  echo "▶ Analytics will report to: $ANALYTICS_URL"
+else
+  echo "▶ Analytics: OFF for this build (ALLOW_NO_ANALYTICS=1)"
+fi
+
 VERSION="$(node -p "require('./package.json').version")"
 mkdir -p dist
 
 echo "▶ 1/4  Building the web bundle (static export)"
 pnpm build
 [ -f out/index.html ] || die "out/index.html missing: the web build failed."
+if [ "${ALLOW_NO_ANALYTICS:-0}" != "1" ]; then
+  HOSTPART="${ANALYTICS_URL#*://}"
+  grep -rqF "$HOSTPART" out/_next 2>/dev/null || die "The analytics address ($HOSTPART) is not inside the built app, so it would report nothing. Check .env.production and rebuild (delete .next and out first)."
+  echo "  ✓ analytics address is baked into the build"
+fi
 
 echo "▶ 2/4  Syncing the Android project"
 [ -d android ] || pnpm exec cap add android
@@ -48,13 +79,29 @@ if grep -q '"url"' android/app/src/main/assets/capacitor.config.json 2>/dev/null
 fi
 node scripts/android-setup.mjs
 
-echo "▶ 3/4  Building with Gradle"
+echo "▶ 3/4  Building with Gradle (JDK: $JAVA_HOME)"
 cd android
 chmod +x gradlew
+GRADLE_LOG="$(mktemp)"
+trap 'rm -f "$GRADLE_LOG"' EXIT
+# -Dorg.gradle.java.home makes Gradle's own daemon use the chosen JDK too, not just the launcher script.
+gradle_run() { ./gradlew --no-daemon "-Dorg.gradle.java.home=$JAVA_HOME" "$@" 2>&1 | tee "$GRADLE_LOG"; }
 if [ "$DEBUG" = "1" ]; then
-  ./gradlew --no-daemon assembleDebug
+  TASKS=(assembleDebug)
 else
-  case "$WHAT" in apk) ./gradlew --no-daemon assembleRelease ;; aab) ./gradlew --no-daemon bundleRelease ;; all) ./gradlew --no-daemon assembleRelease bundleRelease ;; esac
+  case "$WHAT" in apk) TASKS=(assembleRelease) ;; aab) TASKS=(bundleRelease) ;; all) TASKS=(assembleRelease bundleRelease) ;; esac
+fi
+if ! gradle_run "${TASKS[@]}"; then
+  echo >&2
+  if grep -q "Unsupported class file major version" "$GRADLE_LOG"; then
+    echo "✗ Gradle was started on a JDK it does not support. The JDK used was: $JAVA_HOME" >&2
+    echo "  Use Java 21: CLINEXIA_JDK_HOME=/path/to/jdk-21 pnpm release:apk" >&2
+  elif grep -q "SDK location not found\|licenses have not been accepted" "$GRADLE_LOG"; then
+    echo "✗ Android SDK problem. Open Android Studio once and accept the SDK licences, or run: \$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager --licenses" >&2
+  else
+    echo "✗ Gradle failed. The error is above. If you send it to support, include the first 'What went wrong' block." >&2
+  fi
+  exit 1
 fi
 cd ..
 

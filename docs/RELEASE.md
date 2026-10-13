@@ -1,16 +1,19 @@
 # Releasing Clinexia on Android
 
-Four ways to get the app to people. They all start from the same signed build.
+Several ways to get the app to people. They all start from the same signed build.
 
 | Channel | Best for | Command |
 |---|---|---|
 | **Direct APK** | Anyone, right now, from your website | `pnpm release:apk` |
 | **Firebase App Distribution** | Testers and early users by invitation link | `pnpm release:apk` then `pnpm release:firebase` |
 | **Google Play** | Everyone, with automatic updates | `pnpm release:aab`, then upload in Play Console |
+| **Palm Store** | Tecno, Infinix and itel phones | `pnpm release:apk`, then upload in the Palm Store console (section 5b) |
 | **Windows (Microsoft Store)** | Windows PCs | Packaged from the web app with PWABuilder (see the web repository README) |
 
 ## 0. Requirements (once)
 - **Android Studio** (it installs the Android SDK and a JDK). Then: `export ANDROID_HOME=$HOME/Android/Sdk`
+- **A JDK from 21 to 24 (21 is best).** Java 25 does not work with this project's Gradle (`Unsupported class file major version 69`). You do not need to change your system Java: `pnpm release:apk` looks for a suitable JDK itself (Android Studio's bundled one, JetBrains Toolbox, SDKMAN, `/usr/lib/jvm`...) and tells Gradle to use it. To force one: `CLINEXIA_JDK_HOME=/path/to/jdk-21 pnpm release:apk`
+- The app runs on **Android 7.0 (API 24) or newer**
 - **Node.js 22+** and **pnpm**
 - The Android project created with the Clinexia app id: `pnpm build && pnpm exec cap add android`
 - `.env.production` with `NEXT_PUBLIC_ANALYTICS_URL=https://<your app address>` (see `.env.example`)
@@ -65,6 +68,21 @@ Testers get an email. For a public join link: App Distribution → Testers & Gro
 7. Test, then promote the release to production.
 8. When the listing is live, set `NEXT_PUBLIC_PLAY_STORE_URL` on the website and redeploy.
 
+## 5b. Palm Store (Tecno, Infinix and itel phones)
+Palm Store is Transsion's app store, preinstalled on Tecno, Infinix and itel phones, which many clinicians and students carry. It uses the same signed build as every other channel.
+
+I could not find public documentation of the Palm Store developer portal, so confirm each step below in the console rather than assuming it matches Google Play.
+1. `pnpm release:apk` to build `dist/Clinexia-<version>.apk`.
+2. Create a Palm Store developer account and complete whatever identity or company verification it asks for.
+3. Create the app with package name **`com.clinexia.app`** and upload the signed APK. Check whether it also accepts an AAB.
+4. Fill the listing from `store/palm/listing.md` (it marks every field that needs checking), add the privacy policy URL (`https://<your app address>/privacy`) and answer the data questions using `store/play/data-safety.md`.
+5. Submit for review, then test the version that goes live on a Tecno, Infinix or itel phone.
+6. When the listing is live, set `NEXT_PUBLIC_PALM_STORE_URL` on the website and redeploy.
+
+**Android version:** Clinexia needs **Android 7.0 (API 24) or newer** (Capacitor 8 requires it). Phones on Android 6 or older cannot install it, and that includes some older Tecno and itel models.
+
+Always sign with the same keystore. An app signed with a different key cannot update a copy that was installed from another channel.
+
 ## 6. Checklist for every release
 - [ ] `pnpm typecheck && pnpm test` pass
 - [ ] Version raised in `package.json`
@@ -72,11 +90,14 @@ Testers get an email. For a public join link: App Distribution → Testers & Gro
 - [ ] Built on a clean checkout, installed on a real phone, and tried: a calculator, a dose with mg and mL, the back button, dark mode
 - [ ] Release notes written
 - [ ] The keystore is backed up
+- [ ] The build printed `Analytics will report to: https://<your app address>` (the script checks this for you)
 
 ## Troubleshooting
 | Problem | Fix |
 |---|---|
-| `Java not found` | Install Android Studio, or set `JAVA_HOME` to its `jbr` folder |
+| `No suitable JDK found` | Install a JDK 21 (Android Studio bundles one, or SDKMAN: `sdk install java 21-tem`), or point to one: `CLINEXIA_JDK_HOME=/path/to/jdk-21 pnpm release:apk` |
+| `Unsupported class file major version 69` | Gradle was started on Java 25. The release script now avoids this by choosing Java 21 to 24. If it still happens, set `CLINEXIA_JDK_HOME` to a JDK 21 and run `rm -rf android/.gradle` once |
+| `NEXT_PUBLIC_ANALYTICS_URL is not set` / `must start with https://` / `placeholder` | Put your deployed web app address (https) in `.env.production`. The build refuses to make an APK that would report no usage. `ALLOW_NO_ANALYTICS=1` overrides this on purpose |
 | `Android SDK not found` | `export ANDROID_HOME=$HOME/Android/Sdk` |
 | `No keystore.properties` | `pnpm keystore:create`, or `DEBUG_APK=1` for a test build |
 | `android/ still uses the old app id` | `rm -rf android && pnpm build && pnpm exec cap add android` |
