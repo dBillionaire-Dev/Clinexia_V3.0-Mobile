@@ -1,6 +1,8 @@
 import type { Metadata, Viewport } from "next"
 import "./globals.css"
 import { AppShell } from "@/components/app-shell"
+import { Splash } from "@/components/splash"
+import { SPLASH_INIT } from "@/lib/splash"
 
 export const metadata: Metadata = {
   title: { default: "Clinexia", template: "%s · Clinexia" },
@@ -23,8 +25,9 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_INIT }} />
+        <script dangerouslySetInnerHTML={{ __html: SPLASH_INIT }} />
       </head>
-      <body><AppShell>{children}</AppShell></body>
+      <body><Splash /><AppShell>{children}</AppShell></body>
     </html>
   )
 }
