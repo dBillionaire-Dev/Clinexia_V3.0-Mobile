@@ -18,7 +18,7 @@ const config: CapacitorConfig = {
     ...(devUrl ? { url: devUrl, cleartext: devUrl.startsWith("http://") } : {}),
   },
   plugins: {
-    SplashScreen: { launchShowDuration: 1000, launchAutoHide: true, backgroundColor: "#073a68", showSpinner: false },
+    SplashScreen: { launchShowDuration: 2500, launchAutoHide: true, backgroundColor: "#073a68", showSpinner: false },
     StatusBar: { style: "DARK", backgroundColor: "#073a68", overlaysWebView: false },
     Keyboard: { resize: "body", resizeOnFullScreen: true },
   },

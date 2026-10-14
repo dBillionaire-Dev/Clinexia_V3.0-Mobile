@@ -13,7 +13,7 @@ const ev = (over: Partial<CalculationEvent> = {}): CalculationEvent => ({
   id: `00000000-0000-4000-8000-${String(++n).padStart(12, "0")}`,
   anonymousId: "anon", calculatorId: "bmi", calculatorName: "BMI", category: "general",
   occurredAt: new Date(1_700_000_000_000 + n * 1000).toISOString(),
-  appVersion: "3.0.0", wasOffline: false, source: "android", environment: "test", ...over,
+  appVersion: "3.0.4", wasOffline: false, source: "android", environment: "test", ...over,
 })
 const done = (events: CalculationEvent[]): SendResult => ({ kind: "done", finished: events.map((e) => e.id) })
 
