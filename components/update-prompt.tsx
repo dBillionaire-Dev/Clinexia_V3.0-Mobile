@@ -1,7 +1,7 @@
 "use client"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { UPDATE_EVENT } from "@/lib/updater/config"
-import { checkForUpdates, type UpdateAvailableDetail } from "@/lib/updater/controller"
+import { announcePendingUpdate, checkForUpdates, type UpdateAvailableDetail } from "@/lib/updater/controller"
 import { ClinexiaUpdater } from "@/lib/updater/native"
 
 type Phase = "prompt" | "permission" | "downloading" | "installing" | "error"
@@ -18,18 +18,32 @@ export function UpdatePrompt() {
   const [phase, setPhase] = useState<Phase>("prompt")
   const [progress, setProgress] = useState<{ received: number; total: number } | null>(null)
   const [error, setError] = useState("")
+  const [dismissed, setDismissed] = useState(false)
   const busy = useRef(false)
+  const shownCode = useRef<number | null>(null)
 
   useEffect(() => {
     const onAvailable = (e: Event) => {
-      setDetail((e as CustomEvent<UpdateAvailableDetail>).detail)
-      setPhase("prompt")
-      setError("")
+      const d = (e as CustomEvent<UpdateAvailableDetail>).detail
+      if (busy.current) return // never interrupt a download or install in progress
+      const isNewVersion = shownCode.current !== d.manifest.versionCode
+      shownCode.current = d.manifest.versionCode
+      setDetail(d)
+      if (isNewVersion) {
+        setPhase("prompt")
+        setError("")
+        setDismissed(false)
+      } else if (d.manual) {
+        setDismissed(false) // the user asked from Settings: show the dialog again
+      }
     }
     window.addEventListener(UPDATE_EVENT, onAvailable)
+    // Launch: first re-announce an update found earlier (works offline), then refresh from the network (max every 12 h).
+    const early = window.setTimeout(() => void announcePendingUpdate(), 1500)
     const timer = window.setTimeout(() => void checkForUpdates({ manual: false }), 4000)
     return () => {
       window.removeEventListener(UPDATE_EVENT, onAvailable)
+      window.clearTimeout(early)
       window.clearTimeout(timer)
     }
   }, [])
@@ -86,7 +100,25 @@ export function UpdatePrompt() {
   if (!detail) return null
   const { manifest, forced } = detail
   const pct = progress && progress.total > 0 ? Math.min(100, Math.round((progress.received / progress.total) * 100)) : null
-  const later = () => { setDetail(null); void ClinexiaUpdater.cleanup().catch(() => {}) }
+  const later = () => {
+    setDismissed(true)
+    setPhase("prompt")
+    setError("")
+    void ClinexiaUpdater.cleanup().catch(() => {})
+  }
+
+  // After "Later": a small chip stays visible so the update is not forgotten. Tapping it reopens the dialog.
+  if (dismissed && !forced) {
+    return (
+      <button
+        onClick={() => setDismissed(false)}
+        className="fixed left-1/2 z-[60] -translate-x-1/2 rounded-full bg-blue-600 px-4 py-2 text-xs font-bold text-white shadow-lg"
+        style={{ top: "calc(env(safe-area-inset-top, 0px) + 8px)" }}
+      >
+        Update {manifest.versionName} available · Tap to update
+      </button>
+    )
+  }
 
   return (
     <div role="dialog" aria-modal="true" aria-labelledby="update-title" className="fixed inset-0 z-[70] grid place-items-center bg-black/50 p-4">
