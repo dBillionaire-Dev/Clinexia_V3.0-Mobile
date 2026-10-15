@@ -23,6 +23,13 @@ android {
             ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
     }
+    // clinexia-flavors: "direct" = APK distributed outside Google Play (has the in-app updater and the
+    // REQUEST_INSTALL_PACKAGES permission). "play" = Google Play build: no updater code, no such permission.
+    flavorDimensions "distribution"
+    productFlavors {
+        direct { dimension "distribution" }
+        play { dimension "distribution" }
+    }
     signingConfigs {
         release {
             if (keystoreProperties['storeFile']) {

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- "direct" flavor only (APK distributed outside Google Play). The Google Play flavor does not
+     declare this permission: Play policy forbids apps that install other packages or self-update. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+</manifest>
