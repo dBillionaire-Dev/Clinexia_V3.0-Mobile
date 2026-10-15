@@ -1,0 +1,115 @@
+name: Release APK
+
+# Push a version tag to release:   git tag -a v3.0.6 -m "What changed" && git push origin v3.0.6
+# The workflow builds the release-signed APK, publishes it to GitHub Releases, verifies the upload,
+# and only then updates version.json on main (which is what phones read).
+# Retry a failed run from the Actions tab: "Run workflow" and type the same tag.
+on:
+  push:
+    tags: ["v*.*.*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release, e.g. v3.0.6 (must match package.json)"
+        required: true
+      notes:
+        description: "Release notes (default: the tag message)"
+        required: false
+      mandatory:
+        description: "Force everyone to update"
+        type: boolean
+        default: false
+      min_supported:
+        description: "Lowest versionCode still allowed (blank = no minimum)"
+        required: false
+
+permissions:
+  contents: write   # create the GitHub Release and commit version.json
+
+concurrency:
+  group: release-apk
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    # Signing secrets live in the "release" environment, so only this job can read them.
+    environment: release
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      NEXT_PUBLIC_ANALYTICS_URL: ${{ vars.NEXT_PUBLIC_ANALYTICS_URL }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.ref }}
+          fetch-depth: 0
+
+      - name: Check the tag matches package.json
+        run: |
+          VERSION="$(node -p "require('./package.json').version")"
+          [ "$TAG" = "v$VERSION" ] || { echo "::error::Tag $TAG does not match package.json version $VERSION. Bump the version, commit, and tag again."; exit 1; }
+          grep -q "APP_VERSION = \"$VERSION\"" lib/app-info.ts || { echo "::error::lib/app-info.ts does not say $VERSION (run: pnpm version:bump)."; exit 1; }
+          [ -n "$NEXT_PUBLIC_ANALYTICS_URL" ] || { echo "::error::Repository variable NEXT_PUBLIC_ANALYTICS_URL is not set."; exit 1; }
+          echo "Releasing $TAG"
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: latest   # the lockfile was written by a recent pnpm; if you add "packageManager" to package.json, remove this line
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Accept Android SDK licences
+        run: yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null || true
+
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
+      - run: pnpm test
+
+      - name: Restore the release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: |
+          [ -n "$KEYSTORE_BASE64" ] && [ -n "$STORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ] \
+            || { echo "::error::Missing one of the ANDROID_* secrets in the 'release' environment."; exit 1; }
+          umask 077
+          printf '%s' "$KEYSTORE_BASE64" | base64 -d > clinexia-release.jks
+          printf 'storeFile=clinexia-release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
+
+      - name: Release notes
+        env:
+          NOTES_INPUT: ${{ inputs.notes }}
+        run: |
+          if [ -n "$NOTES_INPUT" ]; then printf '%s\n' "$NOTES_INPUT" > "$RUNNER_TEMP/notes.txt"
+          else git for-each-ref --format='%(contents)' "refs/tags/$TAG" | sed '/^-----BEGIN PGP/,$d' > "$RUNNER_TEMP/notes.txt"; fi
+          [ -s "$RUNNER_TEMP/notes.txt" ] || echo "Clinexia ${TAG#v}" > "$RUNNER_TEMP/notes.txt"
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Build, publish and update version.json
+        env:
+          MANDATORY: ${{ inputs.mandatory }}
+          MIN_SUPPORTED: ${{ inputs.min_supported }}
+          APK_REPO: ${{ github.repository }}
+        run: |
+          ARGS=(--publish --notes-file "$RUNNER_TEMP/notes.txt")
+          [ "$MANDATORY" = "true" ] && ARGS+=(--mandatory)
+          [ -n "$MIN_SUPPORTED" ] && ARGS+=(--min-supported "$MIN_SUPPORTED")
+          bash scripts/release-update.sh "${ARGS[@]}"
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f clinexia-release.jks keystore.properties
