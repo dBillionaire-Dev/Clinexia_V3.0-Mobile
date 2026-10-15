@@ -24,6 +24,7 @@ while [ $# -gt 0 ]; do
   shift
 done
 die() { echo "✗ $*" >&2; exit 1; }
+[ -z "$NOTES" ] && [ -n "$NOTES_FILE" ] && NOTES="$(cat "$NOTES_FILE")"
 command -v node >/dev/null || die "Node is required."
 
 VERSION="$(node -p "require('./package.json').version")"
@@ -51,7 +52,6 @@ fi
 [ -f "$APK" ] || die "$APK not found."
 
 ARGS=(--apk "$APK" --url "$URL" --out dist/version.json)
-[ -n "$NOTES_FILE" ] && ARGS+=(--notes-file "$NOTES_FILE")
 [ -n "$NOTES" ] && ARGS+=(--notes "$NOTES")
 [ -n "$MIN" ] && ARGS+=(--min "$MIN")
 [ "$MANDATORY" = "1" ] && ARGS+=(--mandatory)
@@ -73,9 +73,23 @@ GOT="$( curl -fsSL "$URL" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -d
 echo "  ✓ checksum matches"
 
 echo "▶ Publishing version.json"
+if git symbolic-ref -q HEAD >/dev/null; then
+  BRANCH="$(git symbolic-ref --short HEAD)"
+else
+  # Detached HEAD (a tag checkout in CI): update version.json on the branch phones read it from.
+  [ -n "${CI:-}" ] || die "Detached HEAD. Check out a branch (main) and re-run."
+  BRANCH="${RELEASE_BRANCH:-main}"
+  git fetch -q origin "$BRANCH"
+  git checkout -q -f -B "$BRANCH" "origin/$BRANCH"
+fi
+[ "$BRANCH" = "main" ] || echo "⚠ Phones read version.json from the main branch, but you are on '$BRANCH'."
 cp dist/version.json version.json
 git add version.json
-git commit -m "release: $VERSION (version.json)"
-git push
+if git diff --cached --quiet; then
+  echo "  version.json is already up to date"
+else
+  git commit -q -m "release: $VERSION (version.json)"
+fi
+git push origin "HEAD:$BRANCH"
 echo "✓ Done. Phones will see $VERSION within about 12 hours, or immediately via Settings → Check for updates."
 echo "  Raw file: https://raw.githubusercontent.com/$REPO/main/version.json (GitHub may cache it for a few minutes)"

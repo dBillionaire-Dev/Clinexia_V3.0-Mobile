@@ -17,3 +17,27 @@
 Google Play: build the bundle with `pnpm release:aab` (the `play` flavor). It has no updater and no install permission.
 
 Manual equivalent of step 4: bump → `pnpm release:apk` → `sha256sum dist/Clinexia-<v>.apk` → upload to GitHub Releases → write `version.json` (`node scripts/make-version-json.mjs --apk … --url …`) → commit and push it.
+
+## Automatic releases from GitHub (optional)
+
+Workflow: `.github/workflows/release-apk.yml`. Releasing becomes: bump, commit, `git tag -a v3.0.6 -m "notes"`, `git push && git push origin v3.0.6`.
+
+### One-time setup
+1. **Environment.** Repo → Settings → Environments → New environment → name it `release`. Optionally restrict *Deployment branches and tags* to the tag pattern `v*`, and add yourself as a *Required reviewer* if you want a manual approval click per release.
+2. **Keystore secrets** (add them to the `release` environment, not the repo):
+   - `ANDROID_KEYSTORE_BASE64`: the keystore file, base64-encoded: `base64 -w0 clinexia-release.jks`
+   - `ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_PASSWORD`, `ANDROID_KEY_ALIAS`: the values in your local `keystore.properties`
+3. **Variable** (Settings → Secrets and variables → Actions → Variables): `NEXT_PUBLIC_ANALYTICS_URL` = your deployed web app address (the same value as in your local `.env.production`).
+4. **Workflow permissions.** Settings → Actions → General → Workflow permissions. The workflow asks for `contents: write` itself; if an organization policy forces read-only, allow read and write here.
+5. **Branch protection.** The workflow pushes `version.json` straight to `main`. If `main` requires pull requests, allow `github-actions[bot]` to bypass, or the last step will fail (the APK is already uploaded by then; fix the rule and re-run).
+
+With the GitHub CLI (replace OWNER/REPO):
+```bash
+gh api -X PUT repos/OWNER/REPO/environments/release
+base64 -w0 clinexia-release.jks | gh secret set ANDROID_KEYSTORE_BASE64 --env release --repo OWNER/REPO
+gh secret set ANDROID_KEYSTORE_PASSWORD --env release --repo OWNER/REPO     # paste when prompted
+gh secret set ANDROID_KEY_PASSWORD --env release --repo OWNER/REPO
+gh secret set ANDROID_KEY_ALIAS --env release --repo OWNER/REPO
+gh variable set NEXT_PUBLIC_ANALYTICS_URL --body "https://your-web-app" --repo OWNER/REPO
+```
+Keep the keystore file and passwords backed up outside GitHub too; the secrets cannot be read back.
