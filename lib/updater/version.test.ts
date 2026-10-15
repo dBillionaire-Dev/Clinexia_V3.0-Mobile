@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest"
-import { CHECK_INTERVAL_MS, isForced, isNewer, parseManifest, shouldCheckNow, versionCodeFromName } from "./version"
+import { CHECK_INTERVAL_MS, isForced, isNewer, parseManifest, parsePending, shouldCheckNow, versionCodeFromName } from "./version"
 
 const SHA = "a".repeat(64)
 const base = {
@@ -72,5 +72,21 @@ describe("parseManifest", () => {
   })
   it("treats mandatory only when exactly true", () => {
     expect(parseManifest({ ...base, mandatory: "true" })!.mandatory).toBe(false)
+  })
+})
+
+describe("parsePending (remembered update, used to prompt on every launch)", () => {
+  const stored = JSON.stringify(base)
+  it("returns the update while the installed build is older", () => {
+    expect(parsePending(stored, 30004)).toEqual(base)
+  })
+  it("returns null once the app has been updated to that version or newer", () => {
+    expect(parsePending(stored, 30005)).toBeNull()
+    expect(parsePending(stored, 30010)).toBeNull()
+  })
+  it("returns null for nothing stored, corrupt or tampered data", () => {
+    expect(parsePending(null, 30004)).toBeNull()
+    expect(parsePending("{not json", 30004)).toBeNull()
+    expect(parsePending(JSON.stringify({ ...base, apkUrl: "http://evil.test/a.apk" }), 30004)).toBeNull()
   })
 })

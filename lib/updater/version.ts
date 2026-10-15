@@ -49,6 +49,20 @@ export function isForced(manifest: Pick<UpdateManifest, "mandatory" | "minSuppor
   return manifest.mandatory || currentVersionCode < manifest.minSupportedVersion
 }
 
+/**
+ * Reads a remembered "update available" record from storage. Returns it only while it is still newer than
+ * the installed build (so it disappears by itself once the app has been updated), otherwise null.
+ */
+export function parsePending(stored: string | null, currentVersionCode: number): UpdateManifest | null {
+  if (!stored) return null
+  try {
+    const manifest = parseManifest(JSON.parse(stored))
+    return manifest && isNewer(manifest, currentVersionCode) ? manifest : null
+  } catch {
+    return null
+  }
+}
+
 /** Automatic checks run at most once per interval; a missing or future timestamp means "check now". */
 export function shouldCheckNow(lastCheckMs: number | null, nowMs: number, intervalMs = CHECK_INTERVAL_MS): boolean {
   if (lastCheckMs === null || !Number.isFinite(lastCheckMs)) return true

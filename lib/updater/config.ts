@@ -5,4 +5,5 @@ export const UPDATE_MANIFEST_URL =
   "https://raw.githubusercontent.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/main/version.json"
 
 export const LAST_CHECK_KEY = "clinexia:update:last-check"
+export const PENDING_KEY = "clinexia:update:pending"
 export const UPDATE_EVENT = "clinexia:update-available"
