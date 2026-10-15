@@ -82,9 +82,32 @@ jobs:
         run: |
           [ -n "$KEYSTORE_BASE64" ] && [ -n "$STORE_PASSWORD" ] && [ -n "$KEY_ALIAS" ] && [ -n "$KEY_PASSWORD" ] \
             || { echo "::error::Missing one of the ANDROID_* secrets in the 'release' environment."; exit 1; }
+          # Pasted secrets often carry a stray newline or carriage return; strip those only.
+          clean() { printf '%s' "$1" | tr -d '\r\n'; }
           umask 077
-          printf '%s' "$KEYSTORE_BASE64" | base64 -d > clinexia-release.jks
-          printf 'storeFile=clinexia-release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' "$STORE_PASSWORD" "$KEY_ALIAS" "$KEY_PASSWORD" > keystore.properties
+          clean "$KEYSTORE_BASE64" | tr -d ' ' | base64 -d > clinexia-release.jks
+          printf 'storeFile=clinexia-release.jks\nstorePassword=%s\nkeyAlias=%s\nkeyPassword=%s\n' \
+            "$(clean "$STORE_PASSWORD")" "$(clean "$KEY_ALIAS")" "$(clean "$KEY_PASSWORD")" > keystore.properties
+
+      - name: Verify the keystore opens (fails fast, before the 2-minute build)
+        env:
+          STORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+        run: |
+          # This file hash is not secret. Compare it with: sha256sum clinexia-release.jks (on your machine).
+          echo "Keystore file sha256: $(sha256sum clinexia-release.jks | cut -d' ' -f1)"
+          SP="$(printf '%s' "$STORE_PASSWORD" | tr -d '\r\n')"; export SP
+          if ! keytool -list -keystore clinexia-release.jks -storepass:env SP > "$RUNNER_TEMP/aliases.txt" 2>&1; then
+            echo "::error::The keystore could not be opened. Either ANDROID_KEYSTORE_PASSWORD is not this keystore's password, or ANDROID_KEYSTORE_BASE64 is a different keystore file (compare the sha256 above with your local file). Also check for a repo-level secret of the same name hiding the environment one."
+            exit 1
+          fi
+          AL="$(printf '%s' "$KEY_ALIAS" | tr -d '\r\n')"
+          if ! keytool -list -keystore clinexia-release.jks -storepass:env SP -alias "$AL" > /dev/null 2>&1; then
+            echo "::error::The keystore opens, but there is no key alias named '$AL'. Aliases in it:"
+            grep -E ', PrivateKeyEntry' "$RUNNER_TEMP/aliases.txt" | cut -d, -f1 || true
+            exit 1
+          fi
+          echo "Keystore opens and alias '$AL' exists."
 
       - name: Release notes
         env:
