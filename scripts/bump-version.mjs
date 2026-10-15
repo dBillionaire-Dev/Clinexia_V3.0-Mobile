@@ -23,6 +23,7 @@ const edits = [
 for (const [file, from, to] of edits) {
   if (!fs.existsSync(file)) continue
   const text = fs.readFileSync(file, "utf8")
+  if (file !== "lib/app-info.ts" && text.includes("APP_VERSION")) { console.log(`  = ${file}: reads APP_VERSION, nothing to change`); continue }
   if (!text.includes(from)) { console.warn(`  ! ${file}: "${from}" not found, check it by hand`); continue }
   fs.writeFileSync(file, text.split(from).join(to))
   console.log(`  ✓ ${file}`)

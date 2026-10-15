@@ -9,6 +9,7 @@ import { watchAppearance } from "@/lib/theme"
 import { isNative } from "@/lib/native"
 import { NativeBridge } from "@/components/native-bridge"
 import { AnalyticsSync } from "@/components/analytics-sync"
+import { APP_VERSION } from "@/lib/app-info"
 import { UpdatePrompt } from "@/components/update-prompt"
 
 const tabs=[{href:"/",label:"Home",Icon:House},{href:"/calculators",label:"Calculators",Icon:Calculator},{href:"/convert",label:"Convert",Icon:ArrowLeftRight},{href:"/history",label:"History",Icon:Clock3},{href:"/tools",label:"Tools",Icon:SlidersHorizontal}]
@@ -42,7 +43,7 @@ export function AppShell({children}:{children:React.ReactNode}){
    <div className="mx-auto grid h-[72px] max-w-[900px] grid-cols-5 px-1">{tabs.map(({href,label,Icon})=>{const active=href==="/"?path===href:path.startsWith(href);return <Link key={href} href={href} className={`flex flex-col items-center justify-center gap-1 text-[10px] font-bold ${active?"text-blue-600":"text-slate-500"}`}><Icon size={20}/><span>{label}</span></Link>})}</div>
   </nav>
   {drawer&&<div className="fixed inset-0 z-50 flex"><button aria-label="Close menu" className="absolute inset-0 bg-black/45" onClick={()=>setDrawer(false)}/><aside className="relative safe-top safe-bottom flex h-full w-[82%] max-w-[340px] flex-col bg-[var(--navy-2)] p-4 text-white shadow-2xl">
-   <div className="mb-6 flex items-center gap-3 px-2 pt-2"><img src="/icon-192x192.png" className="h-11 w-11 rounded-xl" alt=""/><div><div className="text-lg font-extrabold">Clinexia</div><div className="text-xs text-blue-200">v3.0.16 mobile</div></div><button className="ml-auto" onClick={()=>setDrawer(false)}><X/></button></div>
+   <div className="mb-6 flex items-center gap-3 px-2 pt-2"><img src="/icon-192x192.png" className="h-11 w-11 rounded-xl" alt=""/><div><div className="text-lg font-extrabold">Clinexia</div><div className="text-xs text-blue-200">v{APP_VERSION} mobile</div></div><button className="ml-auto" onClick={()=>setDrawer(false)}><X/></button></div>
    <div className="space-y-1">{[{href:"/",label:"Home"},{href:"/calculators",label:"Calculators"},{href:"/convert",label:"Convert"},{href:"/history",label:"History"},{href:"/tools",label:"Lab Tools"},{href:"/estimators",label:"Estimators"},{href:"/references",label:"References"},{href:"/favorites",label:"Favorites"},{href:"/settings",label:"Settings"},{href:"/about",label:"About"}].map(x=><Link key={x.href} href={x.href} className={`block rounded-xl px-4 py-3 text-sm font-bold ${path===x.href?"bg-blue-600":"hover:bg-white/10"}`}>{x.label}</Link>)}</div>
    <div className="mt-auto rounded-xl bg-white/5 p-4 text-xs text-blue-100"><b className="block text-emerald-300">Local first</b>Your history and favorites stay on this device.</div>
   </aside></div>}
