@@ -1,6 +1,6 @@
 {
   "name": "clinexia-mobile",
-  "version": "3.0.4",
+  "version": "3.0.5",
   "private": true,
   "scripts": {
     "dev": "next dev",
@@ -18,7 +18,9 @@
     "release:apk": "bash scripts/release-android.sh apk",
     "release:aab": "bash scripts/release-android.sh aab",
     "release:all": "bash scripts/release-android.sh all",
-    "release:firebase": "bash scripts/firebase-distribute.sh"
+    "release:firebase": "bash scripts/firebase-distribute.sh",
+    "release:update": "bash scripts/release-update.sh",
+    "version:bump": "node scripts/bump-version.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",

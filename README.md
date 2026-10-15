@@ -224,3 +224,52 @@ Known limits: tested on an emulator, so test on your own devices; some calculato
 **Licence:** not chosen yet. Until a licence file is added, all rights are reserved by the author. **Maintainer:** Ebenezer Ekunke ([@dBillionaire-Dev](https://github.com/dBillionaire-Dev)), Nex.Dev. Reference material comes from the organisations named in each calculator's *Clinical notes & sources* panel. Built with Next.js, React, Tailwind CSS, Lucide, Vitest and Capacitor.
 
 <sub>Clinexia is a calculation and reference utility for educational and clinical reference use. It is not a medical device and does not replace clinical judgement, local protocols, product information or validated laboratory procedures. Always verify results before acting on them.</sub>
+
+<!-- clinexia-updater -->
+## In-app updates (APKs outside Google Play)
+
+**How the app is built:** a Next.js static export (`out/`) wrapped by **Capacitor 8**, with the native Android project committed in `android/` (package `com.clinexia.app`). It is not React Native or a TWA.
+
+### What it does
+On start (a few seconds after launch, at most once per 12 hours) and from **Settings → App updates → Check for updates**, the app fetches `version.json` over HTTPS (8 s timeout) through a small native plugin. Offline or on any error it does nothing, and the app stays fully offline-capable.
+
+If `versionCode` is newer, a dialog shows the version name and release notes with **[Update now] [Later]**. If `mandatory` is true, or the installed build is below `minSupportedVersion`, only **[Update now]** is shown. Update now:
+1. checks the "install unknown apps" permission; if missing, explains why and deep-links to Clinexia's settings screen, then continues when you come back;
+2. downloads the APK to app-private storage with a progress bar;
+3. verifies its SHA-256 while streaming; on a mismatch it deletes the file and shows a clear error;
+4. opens the system installer through a FileProvider URI. It never installs silently.
+
+Downloaded files are deleted after failures, on cancel and at the next cold start. The only request data is `versionCode` and `platform=android` in the manifest URL; no personal data or calculator input is sent.
+
+### `version.json`
+```json
+{
+  "versionCode": 30005,
+  "versionName": "3.0.5",
+  "apkUrl": "https://github.com/<owner>/<repo>/releases/download/v3.0.5/Clinexia-3.0.5.apk",
+  "sha256": "<64 hex characters>",
+  "releaseNotes": "What changed",
+  "minSupportedVersion": 30000,
+  "mandatory": false
+}
+```
+Default location: the `main` branch of this repo (`https://raw.githubusercontent.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/main/version.json`). To host it elsewhere (for example on your website), set `NEXT_PUBLIC_UPDATE_MANIFEST_URL` at build time. `versionCode` is `major*10000 + minor*100 + patch` of `package.json`.
+
+### Build flavors (Google Play safe)
+- **`direct`**: APK distributed outside Play. Contains the updater and the `REQUEST_INSTALL_PACKAGES` permission (declared only in `android/app/src/direct/`).
+- **`play`**: Google Play bundle. The updater is a no-op stub, the permission is absent, and the Settings row is hidden.
+
+`pnpm release:apk` builds `direct`; `pnpm release:aab` builds `play`.
+
+### Releasing
+```bash
+pnpm version:bump patch                 # bumps package.json, lib/app-info.ts and the version labels
+pnpm release:update --notes "What changed"           # dry run: signed APK, sha256, shows version.json, publishes nothing
+pnpm release:update --notes "What changed" --publish # uploads to GitHub Releases, verifies the upload, then updates version.json
+```
+Options: `--notes-file`, `--min-supported <versionCode>`, `--mandatory`, `--skip-build`. Full checklist: `docs/UPDATES.md`.
+
+**Always sign with the same release keystore.** Android refuses to update an app signed with a different key, and that check, not the SHA-256, is what protects users if a download host were ever compromised. The SHA-256 protects against corrupted or truncated downloads.
+
+### Tests
+`pnpm test` includes `lib/updater/*.test.ts` (version comparison, forced-update rules, 12-hour throttle, manifest validation, checksum verification, `version.json` builder). The native SHA-256 code has a JUnit test: `cd android && ./gradlew testDirectDebugUnitTest`.

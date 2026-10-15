@@ -1,0 +1,9 @@
+{
+  "versionCode": 30005,
+  "versionName": "3.0.5",
+  "apkUrl": "https://github.com/dBillionaire-Dev/ConvertLAB_V3.0-Mobile/releases/download/v3.0.5/Clinexia-3.0.5.apk",
+  "sha256": "2530bec96ad7dcb1002833b8a5c72a859eabad9451e874464029d839c021406a",
+  "releaseNotes": "What changed",
+  "minSupportedVersion": 0,
+  "mandatory": false
+}

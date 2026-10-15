@@ -2,4 +2,6 @@
 <paths xmlns:android="http://schemas.android.com/apk/res/android">
     <external-path name="my_images" path="." />
     <cache-path name="my_cache_images" path="." />
+    <!-- In-app updates: downloaded APKs live in app-private storage (getFilesDir()/updates). -->
+    <files-path name="clinexia_updates" path="updates/" />
 </paths>

@@ -88,9 +88,10 @@ trap 'rm -f "$GRADLE_LOG"' EXIT
 # -Dorg.gradle.java.home makes Gradle's own daemon use the chosen JDK too, not just the launcher script.
 gradle_run() { ./gradlew --no-daemon "-Dorg.gradle.java.home=$JAVA_HOME" "$@" 2>&1 | tee "$GRADLE_LOG"; }
 if [ "$DEBUG" = "1" ]; then
-  TASKS=(assembleDebug)
+  TASKS=(assembleDirectDebug)
 else
-  case "$WHAT" in apk) TASKS=(assembleRelease) ;; aab) TASKS=(bundleRelease) ;; all) TASKS=(assembleRelease bundleRelease) ;; esac
+  # "direct" flavor = APK with the in-app updater; "play" flavor = Google Play bundle without it.
+  case "$WHAT" in apk) TASKS=(assembleDirectRelease) ;; aab) TASKS=(bundlePlayRelease) ;; all) TASKS=(assembleDirectRelease bundlePlayRelease) ;; esac
 fi
 if ! gradle_run "${TASKS[@]}"; then
   echo >&2
@@ -113,18 +114,18 @@ verify() {
   if [ -n "$apksigner" ]; then "$apksigner" verify --print-certs "$1" >/dev/null 2>&1 && echo "  ✓ signature verified: $(basename "$1")" || echo "  ⚠ apksigner could not verify $(basename "$1")"; fi
 }
 if [ "$DEBUG" = "1" ]; then
-  cp android/app/build/outputs/apk/debug/app-debug.apk "dist/Clinexia-$VERSION-DEBUG.apk"
+  cp android/app/build/outputs/apk/direct/debug/app-direct-debug.apk "dist/Clinexia-$VERSION-DEBUG.apk"
   echo "  dist/Clinexia-$VERSION-DEBUG.apk (debug build: for your own testing only)"
 else
   if [ "$WHAT" = "apk" ] || [ "$WHAT" = "all" ]; then
-    SRC="android/app/build/outputs/apk/release/app-release.apk"
+    SRC="android/app/build/outputs/apk/direct/release/app-direct-release.apk"
     [ -f "$SRC" ] || die "Signed APK not found ($SRC). Is keystore.properties valid?"
     cp "$SRC" "dist/Clinexia-$VERSION.apk"
     echo "$(sha "dist/Clinexia-$VERSION.apk")  Clinexia-$VERSION.apk" > "dist/Clinexia-$VERSION.apk.sha256"
     verify "dist/Clinexia-$VERSION.apk"
   fi
   if [ "$WHAT" = "aab" ] || [ "$WHAT" = "all" ]; then
-    SRC="android/app/build/outputs/bundle/release/app-release.aab"
+    SRC="android/app/build/outputs/bundle/playRelease/app-play-release.aab"
     [ -f "$SRC" ] || die "Signed AAB not found ($SRC)."
     cp "$SRC" "dist/Clinexia-$VERSION.aab"
   fi
