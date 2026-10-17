@@ -11,6 +11,7 @@ import { NativeBridge } from "@/components/native-bridge"
 import { AnalyticsSync } from "@/components/analytics-sync"
 import { APP_VERSION } from "@/lib/app-info"
 import { UpdatePrompt } from "@/components/update-prompt"
+import { FeedbackPrompt } from "@/components/feedback-prompt"
 
 const tabs=[{href:"/",label:"Home",Icon:House},{href:"/calculators",label:"Calculators",Icon:Calculator},{href:"/convert",label:"Convert",Icon:ArrowLeftRight},{href:"/history",label:"History",Icon:Clock3},{href:"/tools",label:"Tools",Icon:SlidersHorizontal}]
 
@@ -39,6 +40,7 @@ export function AppShell({children}:{children:React.ReactNode}){
   <NativeBridge/>
   <AnalyticsSync/>
   <UpdatePrompt/>
+  <FeedbackPrompt/>
   <nav className="safe-bottom fixed inset-x-0 bottom-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur">
    <div className="mx-auto grid h-[72px] max-w-[900px] grid-cols-5 px-1">{tabs.map(({href,label,Icon})=>{const active=href==="/"?path===href:path.startsWith(href);return <Link key={href} href={href} className={`flex flex-col items-center justify-center gap-1 text-[10px] font-bold ${active?"text-blue-600":"text-slate-500"}`}><Icon size={20}/><span>{label}</span></Link>})}</div>
   </nav>
