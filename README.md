@@ -273,3 +273,22 @@ Options: `--notes-file`, `--min-supported <versionCode>`, `--mandatory`, `--skip
 
 ### Tests
 `pnpm test` includes `lib/updater/*.test.ts` (version comparison, forced-update rules, 12-hour throttle, manifest validation, checksum verification, `version.json` builder). The native SHA-256 code has a JUnit test: `cd android && ./gradlew testDirectDebugUnitTest`.
+
+<!-- clinexia-feedback -->
+## User feedback in the Android app
+
+The app asks for a star rating once someone has really used it (3 or more calculations, or 3 or more different days), then opens a short anonymous survey. Answers go to the website's admin panel (`/admin/feedback` in the web repo), which also controls whether the popup is on, how long "Later" waits, and when to ask everyone again.
+
+### What people see
+- A small card above the bottom bar: **How is Clinexia working for you?** with five stars and **Later**. Never in the first minute, never offline, and never if usage statistics are switched off in Settings.
+- A star tap opens the four-step survey with that rating filled in: about you (healthcare or not, area), how you use it (devices, personal or work, kind of workplace), premium (would you pay, a reasonable monthly price in naira, who pays, an optional monthly price for a 10-seat team) and up to three optional open questions. The Android app is already ticked as a device.
+- **Later** brings the card back after the configured number of hours, at most the configured number of times. Sending feedback ends it for good. A draft is kept on the phone.
+- **Settings → Feedback → Send feedback** opens the survey at any time. People who rate 4 or 5 stars see a **Share Clinexia** button afterwards (set `NEXT_PUBLIC_SHARE_URL` at build time to share a specific address; it defaults to `NEXT_PUBLIC_ANALYTICS_URL`).
+
+### How it connects
+It uses the same website address as the usage statistics (`NEXT_PUBLIC_ANALYTICS_URL`) and the phone's own network client, so no extra setup. With that variable unset (development builds) the popup and the Settings row do not appear. Debug builds are stored as `development` and are hidden in the admin panel, which shows production answers only.
+
+**Needs the web side first:** run `supabase/feedback.sql` in the web project and deploy the web repo's `proxy.ts` change that stops redirecting `/api/` calls on the website hosts. Without that change, the website answers the phone with a redirect that a POST does not follow.
+
+### Tests
+`lib/feedback/feedback.test.ts` covers the answer rules, when the popup shows, Later, done and new rounds, the server config check and how replies are turned into messages.

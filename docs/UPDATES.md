@@ -41,3 +41,18 @@ gh secret set ANDROID_KEY_ALIAS --env release --repo OWNER/REPO
 gh variable set NEXT_PUBLIC_ANALYTICS_URL --body "https://your-web-app" --repo OWNER/REPO
 ```
 Keep the keystore file and passwords backed up outside GitHub too; the secrets cannot be read back.
+
+## Website download link (stable address)
+
+Every release now also uploads the APK as `Clinexia.apk` (same file, no version in the name). That gives a link that never changes and always points at the newest release:
+
+`https://github.com/<owner>/<repo>/releases/latest/download/Clinexia.apk`
+
+Use it for `NEXT_PUBLIC_APK_URL` on the website. The website also reads `version.json` and links the newest versioned APK by itself (see the web repo README). Releases made before this change have no `Clinexia.apk`; add it to the current latest release once:
+
+```bash
+R=dBillionaire-Dev/Clinexia_V3.0-Mobile
+gh release download v3.0.17 --repo $R --pattern '*.apk' --dir /tmp/apk      # use your latest tag
+cp /tmp/apk/Clinexia-3.0.17.apk /tmp/apk/Clinexia.apk
+gh release upload v3.0.17 /tmp/apk/Clinexia.apk --repo $R
+```

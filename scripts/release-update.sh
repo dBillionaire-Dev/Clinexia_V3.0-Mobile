@@ -65,7 +65,10 @@ fi
 
 SHA="$(node -p "require('./dist/version.json').sha256")"
 echo "▶ Uploading to GitHub Releases"
-gh release create "$TAG" "$APK" "$APK.sha256" --repo "$REPO" --title "Clinexia $VERSION" --notes "${NOTES:-Clinexia $VERSION}"
+# Clinexia.apk is the same file under a version-less name, so the stable address
+# https://github.com/$REPO/releases/latest/download/Clinexia.apk always serves the newest release (used by the website).
+cp -f "$APK" dist/Clinexia.apk
+gh release create "$TAG" "$APK" dist/Clinexia.apk "$APK.sha256" --repo "$REPO" --title "Clinexia $VERSION" --notes "${NOTES:-Clinexia $VERSION}"
 
 echo "▶ Verifying the uploaded file"
 GOT="$( curl -fsSL "$URL" | { sha256sum 2>/dev/null || shasum -a 256; } | cut -d' ' -f1 )"
