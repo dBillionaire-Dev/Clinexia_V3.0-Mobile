@@ -1,8 +1,8 @@
 {
-  "versionCode": 30019,
-  "versionName": "3.0.19",
-  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v3.0.19/Clinexia-3.0.19.apk",
-  "sha256": "288aa6bb6f8f41a92777ae1c1f4be62f2e1a80103f6d6401f2942e4aaffc5178",
+  "versionCode": 30020,
+  "versionName": "3.0.20",
+  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v3.0.20/Clinexia-3.0.20.apk",
+  "sha256": "023d45cd25c45d5973a75b7a223da834ddaee8c2192fe4f2e50c0215cf5e650e",
   "releaseNotes": "What changed (prompt for pending updates on every launch)",
   "minSupportedVersion": 0,
   "mandatory": false
