@@ -79,3 +79,8 @@ keystore.properties
 
 # Clinexia fix backups
 .clinexia-fix-backup/
+.clinexia-backup/
+.clinexia-backups/
+.clinexia-tmp/
+.convertlab-backups/
+clinexia-apply.sh

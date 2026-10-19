@@ -1,4 +1,5 @@
 import { normalizeState, type FeedbackState } from "./schedule"
+import { preserveCompletion } from "./preserve"
 
 const STATE_KEY = "clinexia:feedback:v1"
 export const DRAFT_KEY = "clinexia:feedback:draft"
@@ -13,7 +14,12 @@ export function readState(version: number): FeedbackState {
 
 export function writeState(state: FeedbackState): void {
   try {
-    localStorage.setItem(STATE_KEY, JSON.stringify(state))
+    // Never let an older copy of the state erase an answer that was already recorded.
+    let stored: unknown = null
+    try {
+      stored = JSON.parse(localStorage.getItem(STATE_KEY) ?? "null")
+    } catch {}
+    localStorage.setItem(STATE_KEY, JSON.stringify(preserveCompletion(stored, state)))
   } catch {}
 }
 
