@@ -1,6 +1,7 @@
 "use client"
 import { getSettings } from "@/lib/client-store"
 import { getAnonymousId } from "./client-id"
+import { countGuestCalculation } from "@/lib/billing/guest"
 import { createOutbox } from "./outbox"
 import { flushEvents } from "./sync"
 import { analyticsAvailable, sendEvents, sendPresence } from "./http"
@@ -70,6 +71,7 @@ export function purgeIfOptedOut(): void {
 
 /** Records that a calculator or converter was used. Never includes inputs or results. Never throws. */
 export async function trackCalculation(e: { calculatorId: string; calculatorName: string; category: string }) {
+  countGuestCalculation() // guest allowance: counts only while premium locking is on and nobody is signed in
   try {
     if (!analyticsEnabled()) return
     outbox().add({
