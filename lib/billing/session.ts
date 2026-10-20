@@ -7,6 +7,7 @@ import { listenAppActive } from "@/lib/native"
 import type { AccessSnapshot } from "./access"
 import { accountsAvailable, apiCall } from "./api"
 import { writeSessionState } from "./guest"
+import { ensureDeviceLinked } from "./link-device"
 import { checkPendingPayment } from "./payments"
 import { clearTokens, hasTokens } from "./tokens"
 
@@ -42,6 +43,7 @@ export async function refreshAccountSession(): Promise<void> {
     if (d.signedIn !== true && hasTokens()) clearTokens() // the server no longer accepts this sign-in (ended or suspended)
     snapshot = { loading: false, enabled: d.enabled === true, enforced: d.enforced === true, signedIn: d.signedIn === true && hasTokens(), email: d.email, entitlements: d.entitlements }
     persist(snapshot)
+    if (snapshot.signedIn && snapshot.email) void ensureDeviceLinked(snapshot.email)
   } else {
     snapshot = { ...snapshot, loading: false, enabled: snapshot.enabled || snapshot.loading === false } // offline: keep the last known answer
   }

@@ -77,6 +77,7 @@ describe("talking to the server", () => {
     expect(interpretApi({ status: 429, data: null })).toMatchObject({ error: "Too many attempts. Please try again later." })
     expect(interpretApi({ status: 500, data: "<html>" })).toMatchObject({ ok: false })
   })
+  it("explains a redirect instead of a vague failure", () => { expect(interpretApi({ status: 308, data: null })).toMatchObject({ ok: false, status: 308 }); expect((interpretApi({ status: 308, data: null }) as any).error).toContain("www.clinexia.app") })
   it("passes success data through", () => { expect(interpretApi({ status: 200, data: { a: 1 } })).toEqual({ ok: true, data: { a: 1 } }) })
 })
 

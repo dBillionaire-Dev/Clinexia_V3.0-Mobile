@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "398596539368",
+    "project_id": "clinexia-notifications",
+    "storage_bucket": "clinexia-notifications.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:398596539368:android:69273eb2f2ffd1b2999a5d",
+        "android_client_info": {
+          "package_name": "com.clinexia.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDQEd8Y1OZjz2c2sIFQ4o6tCArVKS25-XM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

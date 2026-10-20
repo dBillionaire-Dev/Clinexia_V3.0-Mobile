@@ -7,6 +7,7 @@ import { confirmDialog } from "@/components/app-dialogs"
 import { accountsAvailable, apiCall } from "@/lib/billing/api"
 import { ORGANISATION_TYPES, SPECIALTY_LABELS, type Specialty } from "@/lib/billing/config"
 import { notifySessionChanged, signOutNow, useAccountSession } from "@/lib/billing/session"
+import { NotificationsCard } from "./notifications-card"
 import { PlanPicker } from "./plan-picker"
 
 type Me = {
@@ -63,6 +64,7 @@ export function AccountScreen() {
         <p className="muted text-sm">Sign in to see your plan, or create an account.</p>
         <Link href="/login?next=%2Faccount" className="primary block">Sign in</Link>
         <Link href="/register?next=%2Faccount" className="pill block py-3">Create account</Link>
+        <div className="text-left"><NotificationsCard /></div>
       </div>
     )
 
@@ -90,6 +92,8 @@ export function AccountScreen() {
           <button className="muted text-xs underline" onClick={async () => { if (await confirmDialog({ title: "Stop your plan?", description: "You keep access until the end of the month you have paid for. It will not renew.", confirmLabel: "Stop plan", destructive: true })) { await apiCall("/api/billing/cancel", { body: {} }); void load() } }}>Cancel at the end of the paid period</button>
         )}
       </section>
+
+      <NotificationsCard />
 
       {me.organisations.length > 0 && (
         <section className="space-y-2">

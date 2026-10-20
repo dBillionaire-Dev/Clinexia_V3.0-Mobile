@@ -2,9 +2,11 @@
 import { useEffect, useState } from "react"
 import { Loader2 } from "lucide-react"
 import { apiCall } from "@/lib/billing/api"
+import { deviceFields } from "@/lib/billing/link-device"
 import { notifySessionChanged } from "@/lib/billing/session"
 import { setTokens, takeAuthNotice, type TokenSession } from "@/lib/billing/tokens"
 import { BACKGROUND, rolesFor } from "@/lib/feedback/questions"
+import { PasswordInput } from "./password-input"
 
 /** Sign in or create an account. Signing in stores the sign-in on this phone; signing up that needs email confirmation calls onNeedsConfirmation. */
 export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }: { initialMode: "login" | "signup"; onDone: () => void; onNeedsConfirmation: (email: string) => void; onSwitch: (m: "login" | "signup") => void }) {
@@ -13,22 +15,27 @@ export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }:
   const [f, setF] = useState({ email: "", password: "", fullName: "", background: "", role: "" })
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState("")
+  const [code, setCode] = useState<number | null>(null)
   const [notice, setNotice] = useState("")
   useEffect(() => { const n = takeAuthNotice(); if (n) setNotice(n) }, [])
   const set = (k: keyof typeof f, v: string) => setF((cur) => ({ ...cur, [k]: v, ...(k === "background" ? { role: "" } : {}) }))
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    setBusy(true); setError("")
+    setBusy(true); setError(""); setCode(null)
     const r = mode === "login"
-      ? await apiCall<{ session?: TokenSession }>("/api/account/login", { auth: false, body: { email: f.email, password: f.password } })
-      : await apiCall<{ signedIn?: boolean; session?: TokenSession }>("/api/account/signup", { auth: false, body: { ...f, accountType: type } })
+      ? await apiCall<{ session?: TokenSession }>("/api/account/login", { auth: false, body: { email: f.email, password: f.password, ...deviceFields() } })
+      : await apiCall<{ signedIn?: boolean; session?: TokenSession }>("/api/account/signup", { auth: false, body: { ...f, accountType: type, ...deviceFields() } })
     setBusy(false)
-    if (!r.ok) return setError(r.error)
+    if (!r.ok) {
+      setCode(r.status)
+      return setError(r.status === 404 ? "The Clinexia server does not have accounts switched on yet. Please try again later." : r.error)
+    }
     const session = r.data?.session
     if (session) { setTokens(session); notifySessionChanged(); return onDone() }
     if (mode === "signup") return onNeedsConfirmation(f.email.trim().toLowerCase())
-    setError("Could not sign you in right now. Please try again.")
+    setCode(200)
+    setError("The Clinexia server did not send back a sign-in. It probably needs its latest update. Please try again later.")
   }
 
   if (mode === "signup" && !type) {
@@ -51,7 +58,7 @@ export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }:
       {notice && <p role="alert" className="rounded-xl border border-amber-300 bg-amber-50 p-3 text-sm font-semibold text-amber-900">{notice}</p>}
       {mode === "signup" && <label className="block"><span className={label}>Full name</span><input className="field" value={f.fullName} onChange={(e) => set("fullName", e.target.value)} autoComplete="name" required /></label>}
       <label className="block"><span className={label}>Email</span><input className="field" type="email" value={f.email} onChange={(e) => set("email", e.target.value)} autoComplete="email" required /></label>
-      <label className="block"><span className={label}>Password</span><input className="field" type="password" value={f.password} onChange={(e) => set("password", e.target.value)} autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={mode === "login" ? undefined : 10} required />
+      <label className="block"><span className={label}>Password</span><PasswordInput value={f.password} onChange={(e) => set("password", e.target.value)} autoComplete={mode === "login" ? "current-password" : "new-password"} minLength={mode === "login" ? undefined : 10} required />
         {mode === "signup" && <span className="muted mt-1 block text-xs">At least 10 characters.</span>}</label>
       {mode === "signup" && type === "individual" && (
         <>
@@ -62,7 +69,7 @@ export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }:
             <span className="muted mt-1 block text-xs">For your profile only. It never changes what you can access.</span></label>}
         </>
       )}
-      {error && <p role="alert" className="text-sm font-semibold text-red-600">{error}</p>}
+      {error && <p role="alert" className="text-sm font-semibold text-red-600">{error}{code !== null && code !== 0 && code !== 401 ? <span className="muted block text-xs font-normal">Error code {code}</span> : null}</p>}
       <button type="submit" className="primary" disabled={busy}>{busy ? <Loader2 size={18} className="mx-auto animate-spin" /> : mode === "login" ? "Sign in" : "Create account"}</button>
       <div className="flex flex-wrap gap-4 text-sm"><button type="button" className="underline" onClick={() => { setType(null); onSwitch(mode === "login" ? "signup" : "login") }}>{mode === "login" ? "Create an account" : "I already have an account"}</button>{mode === "signup" && <button type="button" className="underline" onClick={() => setType(null)}>Back</button>}</div>
     </form>

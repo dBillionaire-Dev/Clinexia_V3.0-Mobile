@@ -7,10 +7,10 @@ import { afterDone, afterLater, afterShown, freshState, normalizeState, pickCamp
 const NOW = Date.parse("2026-11-01T12:00:00Z")
 const H = 3_600_000
 const D = 86_400_000
-const base: Campaign = { id: "c1", version: 1, title: "Q4 review", kind: "form", presentation: "modal", heading: "Tell us", body: "", ctaLabel: "", ctaUrl: "", audience: "everyone", frequency: "once", repeatDays: 7, allowLater: true, laterHours: 8, durationSeconds: null, dismissible: true, startsAt: null, endsAt: null, status: "active",
+const base: Campaign = { id: "c1", version: 1, title: "Q4 review", kind: "form", presentation: "modal", heading: "Tell us", body: "", ctaLabel: "", ctaUrl: "", audience: "everyone", platforms: ["web", "android", "mobile_web"], frequency: "once", repeatDays: 7, allowLater: true, laterHours: 8, durationSeconds: null, dismissible: true, startsAt: null, endsAt: null, status: "active",
   questions: [{ id: "q1", type: "rating", label: "How is it?", required: true }] }
 const camp = (over: Partial<Campaign> = {}): Campaign => ({ ...base, ...over })
-const ctx = (over: any = {}) => ({ now: NOW, signedIn: false, shownThisSession: false, ...over })
+const ctx = (over: any = {}) => ({ now: NOW, signedIn: false, shownThisSession: false, platform: "android", ...over })
 
 describe("scheduling: starts and ends by the clock", () => {
   it("is live only while active and inside its window", () => {
@@ -24,6 +24,24 @@ describe("scheduling: starts and ends by the clock", () => {
     const c = camp({ startsAt: new Date(NOW + 2 * H).toISOString() })
     expect(shouldShow(c, freshState(1), ctx()).show).toBe(false)
     expect(shouldShow(c, freshState(1), ctx({ now: NOW + 3 * H })).show).toBe(true)
+  })
+})
+
+describe("where it shows: website, Android app, mobile website", () => {
+  it("an Android-only campaign is shown in the Android app and nowhere else", () => {
+    const c = camp({ platforms: ["android"] })
+    expect(shouldShow(c, freshState(1), ctx({ platform: "android" })).show).toBe(true)
+    expect(shouldShow(c, freshState(1), ctx({ platform: "web" })).show).toBe(false)
+    expect(shouldShow(c, freshState(1), ctx({ platform: "mobile_web" })).show).toBe(false)
+  })
+  it("a website-only campaign stays off the phone", () => {
+    const c = camp({ platforms: ["web"] })
+    expect(shouldShow(c, freshState(1), ctx({ platform: "web" })).show).toBe(true)
+    expect(shouldShow(c, freshState(1), ctx({ platform: "android" })).show).toBe(false)
+  })
+  it("older campaigns without the setting still show everywhere", () => {
+    const { platforms: _p, ...legacy } = camp() as any
+    expect(shouldShow(legacy, freshState(1), ctx({ platform: "android" })).show).toBe(true)
   })
 })
 
