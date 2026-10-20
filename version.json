@@ -1,9 +1,9 @@
 {
-  "versionCode": 40001,
-  "versionName": "4.0.1",
-  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.1/Clinexia-4.0.1.apk",
-  "sha256": "0978006bb168050a5239e20f8ab22fdada8f8b3ad8fb4f1f4683637aaa07788f",
-  "releaseNotes": "Clinexia 4.0.1\n\nNew\n- Accounts: create an account and sign in from the profile icon in the top bar.\n- Premium plans: choose specialty premium or all-access and pay securely with Paystack.\n- Every tool now shows whether it is Free or Premium, and which specialty it belongs to.\n- Organisations: add your staff and give each person the specialties they need.\n- Messages and review forms from the Clinexia team. Tap \"Remind me later\" and it waits in your profile icon until you are ready.\n\nImproved\n- If you have already sent feedback, you will not be asked again.\n- Cleaner confirmation pop-ups.",
+  "versionCode": 40003,
+  "versionName": "4.0.3",
+  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.3/Clinexia-4.0.3.apk",
+  "sha256": "a22c77aa79d4089faa30aadb75777b56a07cf38cafbf6935079cdb3d0e6fb5c4",
+  "releaseNotes": "What changed (Notifications integrated into the app)",
   "minSupportedVersion": 0,
   "mandatory": false
 }
