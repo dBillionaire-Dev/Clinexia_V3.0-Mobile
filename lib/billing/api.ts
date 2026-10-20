@@ -16,13 +16,19 @@ type Raw = { status: number; data: unknown } | null
 
 const parse = (d: unknown): unknown => { if (typeof d !== "string") return d; try { return JSON.parse(d) } catch { return null } }
 
-async function send(method: "GET" | "POST", path: string, body: unknown, token?: string): Promise<Raw> {
+const REDIRECTS = [301, 302, 307, 308]
+
+async function send(method: "GET" | "POST", path: string, body: unknown, token?: string, absoluteUrl?: string, hops = 0): Promise<Raw> {
   const headers: Record<string, string> = { "Content-Type": "application/json", "X-Clinexia-Client": isNative() ? "android" : "mobile-web" }
   if (token) headers.Authorization = `Bearer ${token}`
-  const url = `${API_BASE}${path}`
+  const url = absoluteUrl ?? `${API_BASE}${path}`
   try {
     if (isNative()) {
       const r = await CapacitorHttp.request({ url, method, headers, data: method === "POST" ? body ?? {} : undefined, connectTimeout: 10000, readTimeout: 20000 })
+      // The phone's network client does not re-send a POST to a redirected address, so follow it here (once). This happens when the
+      // address is "clinexia.app" and the site answers from "www.clinexia.app".
+      const location = r.headers?.location ?? r.headers?.Location
+      if (REDIRECTS.includes(r.status) && typeof location === "string" && hops < 2) return send(method, path, body, token, new URL(location, url).toString(), hops + 1)
       return { status: r.status, data: parse(r.data) }
     }
     const r = await fetch(url, { method, headers, body: method === "POST" ? JSON.stringify(body ?? {}) : undefined, cache: "no-store" })
