@@ -16,7 +16,7 @@ const Push = registerPlugin<PushPlugin>("PushNotifications")
 const TOKEN_KEY = "clinexia:push-token"
 
 export type PushState = "unsupported" | "granted" | "denied" | "prompt"
-export interface PushMessage { title: string; body: string; url: string }
+export interface PushMessage { id: string; title: string; body: string; url: string }
 
 export async function pushState(): Promise<PushState> {
   if (!isNative()) return "unsupported"
@@ -50,13 +50,18 @@ export async function refreshRegistration(): Promise<void> { const t = remembere
 
 let started = false
 /** Listens for notifications. Safe to call more than once. If notifications were already allowed, registers straight away. */
-export async function startPush(on: { onForeground: (m: PushMessage) => void; onOpen: (url: string) => void }): Promise<void> {
+export async function startPush(on: { onForeground: (m: PushMessage) => void; onOpen: (m: PushMessage) => void }): Promise<void> {
   if (started || !isNative()) return
   started = true
   try {
     await Push.addListener("registration", (e) => { if (e?.value) void sendToken(String(e.value)) })
-    await Push.addListener("pushNotificationReceived", (n) => on.onForeground({ title: n?.title ?? "", body: n?.body ?? "", url: String(n?.data?.url ?? "") }))
-    await Push.addListener("pushNotificationActionPerformed", (a) => { const url = String(a?.notification?.data?.url ?? ""); if (url) on.onOpen(url) })
+    // A notification that arrives while the app is open.
+    await Push.addListener("pushNotificationReceived", (n) => on.onForeground({ id: String(n?.data?.id ?? ""), title: n?.title ?? "", body: n?.body ?? "", url: String(n?.data?.url ?? "") }))
+    // The person tapped a notification in the notification bar (the app may have been closed). It opens the app AND shows the message.
+    await Push.addListener("pushNotificationActionPerformed", (a) => {
+      const n = a?.notification ?? {}
+      on.onOpen({ id: String(n?.data?.id ?? ""), title: n?.title ?? "", body: n?.body ?? "", url: String(n?.data?.url ?? "") })
+    })
     if ((await pushState()) === "granted") await Push.register()
   } catch { /* the plugin is not installed in this build */ }
 }

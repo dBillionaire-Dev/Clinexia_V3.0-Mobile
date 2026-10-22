@@ -59,3 +59,8 @@ When someone registers or signs in here, the app sends this phone's anonymous ID
 made earlier). In the website's admin the device then shows the person's registered name instead of "User-XXXXXX" (a name an admin typed by hand is kept), and Accounts
 management > Details lists the linked devices and the full calculation history, including everything done before registering. Nothing is linked if analytics is switched
 off in Settings, and nothing about a person is linked until they register or sign in.
+
+## Notifications that stay until you close them
+- Tapping a notification in the notification bar opens the app and shows it as a pop-up with the full message (and an Open button if it has a link).
+- A notification that arrives while the app is open shows at the top and stays until you close it.
+- Notifications that were missed or swiped away are fetched from the server (the last 7 days that apply to you) and shown when the app opens or comes back. Each is shown until closed, then not again.
