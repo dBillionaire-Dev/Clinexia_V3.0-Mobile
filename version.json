@@ -1,9 +1,9 @@
 {
-  "versionCode": 40004,
-  "versionName": "4.0.4",
-  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.4/Clinexia-4.0.4.apk",
-  "sha256": "8ed3991a9bd78dd033dd8d9ef4e5e1f943109b1bf7e53a3f0c252ee27f83efbd",
-  "releaseNotes": "What changed (Notifications integrated into the app, you can now get notifications by turning on the notification settings, to get regular updates from the Clinexia Team)",
+  "versionCode": 40005,
+  "versionName": "4.0.5",
+  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.5/Clinexia-4.0.5.apk",
+  "sha256": "b9bec59096ca9bc7e947c505f6a6ca9d34315ad3e859acd7fa13e4f635d21aed",
+  "releaseNotes": "What changed (Clinexia now keeps you informed by email\n\nInvitations: when you invite staff to your organisation, Clinexia emails each person a private invitation link. The invite screen shows who was emailed. If an email can’t be delivered, you’ll still get that person’s link to share yourself.\nPayment receipts: after each successful payment, you’ll receive a receipt with the amount, plan, reference and the date your plan runs until.\nPlan reminders: a few days before your plan ends, we’ll send a reminder. Plans don’t renew automatically, and renewing the same plan early adds a month after your current end date, so nothing is lost.\n\nGood to know\n\nEmails come from Clinexia, so check your spam folder if one doesn’t arrive.\nInvitation links work only for the email address they were sent to, and they expire.\nReceipts and reminders start working for everyone once the web update is live, even before they update the app. Updating the app only improves the invite screen.)",
   "minSupportedVersion": 0,
   "mandatory": false
 }
