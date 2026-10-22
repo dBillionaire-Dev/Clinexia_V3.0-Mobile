@@ -1,9 +1,9 @@
 {
-  "versionCode": 40003,
-  "versionName": "4.0.3",
-  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.3/Clinexia-4.0.3.apk",
-  "sha256": "a22c77aa79d4089faa30aadb75777b56a07cf38cafbf6935079cdb3d0e6fb5c4",
-  "releaseNotes": "What changed (Notifications integrated into the app)",
+  "versionCode": 40004,
+  "versionName": "4.0.4",
+  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.4/Clinexia-4.0.4.apk",
+  "sha256": "8ed3991a9bd78dd033dd8d9ef4e5e1f943109b1bf7e53a3f0c252ee27f83efbd",
+  "releaseNotes": "What changed (Notifications integrated into the app, you can now get notifications by turning on the notification settings, to get regular updates from the Clinexia Team)",
   "minSupportedVersion": 0,
   "mandatory": false
 }
