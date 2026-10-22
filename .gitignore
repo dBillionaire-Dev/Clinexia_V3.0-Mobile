@@ -84,3 +84,4 @@ keystore.properties
 .clinexia-tmp/
 .convertlab-backups/
 clinexia-apply.sh
+clinexia-accounts-mobile.sh

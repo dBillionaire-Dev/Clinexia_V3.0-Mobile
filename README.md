@@ -1,6 +1,6 @@
 # Clinexia: the clinical toolkit for Android
 
-Medical calculators, drug dosing, unit conversions, laboratory tools and reference ranges in one fast app that works **offline**. One Next.js codebase, packaged for **Android** with Capacitor and also usable as a web app / PWA. No account needed.
+Medical calculators, drug dosing, unit conversions, laboratory tools and reference ranges in one fast app that works **offline**. One Next.js codebase, packaged for **Android** with Capacitor and also usable as a web app / PWA. No account needed to try it; create one for premium tools.
 
 > **Version** 3.0.0 · **Status** pre-release · **Package manager** pnpm
 >
@@ -35,7 +35,7 @@ Clinexia (formerly Clinexia) started as a laboratory conversion tool and grew in
 | **References** | Hematology and chemistry reference ranges |
 | **Your data** | History, favorites and settings stay on the device |
 
-Principles: **local first** (no account, calculations never leave the device), **one product** (every tool shares the same layout and result card), **show the working** (formula, notes, limitations and a versioned source), and **logic separate from UI** (calculation code never depends on React).
+Principles: **local first** (an account is optional, calculations never leave the device), **one product** (every tool shares the same layout and result card), **show the working** (formula, notes, limitations and a versioned source), and **logic separate from UI** (calculation code never depends on React).
 
 ---
 
@@ -101,8 +101,8 @@ Not included on purpose: tablet-band regimens, fixed-dose combinations, fluids, 
 | Share anonymous usage statistics | Sends an anonymous usage count (see Privacy). On by default and you can turn it off |
 
 ### 3.9 Privacy
-- No account. History, favorites and settings stay on the device.
-- If sharing is on, the app sends an **anonymous count**: a random installation ID, which tool was used, the app version and when. It never sends what you typed, your results or your history. See the web app's `/privacy` page for the full policy.
+- An account is optional. History, favorites and settings stay on the device.
+- If sharing is on, the app sends an **anonymous count**: a random installation ID, which tool was used, the app version and when. It never sends what you typed, your results or your history. With an account, we also keep your name, email and plan and link this phone's usage to your account (switch statistics sharing off and the phone is not linked). Payments go through Paystack; we never see card details. See the web app's `/privacy` page for the full policy.
 - Clearing the app's storage or reinstalling creates a new random ID.
 
 ### 3.10 FAQ
@@ -292,3 +292,14 @@ It uses the same website address as the usage statistics (`NEXT_PUBLIC_ANALYTICS
 
 ### Tests
 `lib/feedback/feedback.test.ts` covers the answer rules, when the popup shows, Later, done and new rounds, the server config check and how replies are turned into messages.
+
+## Accounts, plans, campaigns and notifications
+
+The app has no server of its own: accounts, plans, payments, campaigns and notifications use the **Clinexia website's backend** (the web repo, which also holds the admin screens). Details and set-up: [`docs/ACCOUNTS.md`](docs/ACCOUNTS.md).
+
+- Profile icon in the header: sign in / create account, My account, sign out. A red "!" shows when a review form or message is waiting.
+- Sign-in uses tokens (no cookies). Build with `NEXT_PUBLIC_ANALYTICS_URL=https://www.clinexia.app` (the full address, with `www`).
+- Premium plans (specialties or All-access) are paid with Paystack in the phone's browser; the app confirms the payment when you return. Premium locking and the 3-calculation guest limit are controlled on the website and only apply when it is switched on. Tools are labelled Free or Premium.
+- Campaigns (notices and review forms) shown as a sheet, a bar or an alert; "Remind me later" shrinks into the profile icon. Answers and reminders follow the account.
+- Phone notifications (Firebase Cloud Messaging): a notification tapped in the bar opens the app and shows as a pop-up; every notification stays on screen until it is closed; missed ones appear when the app opens. Needs `google-services.json`, the push plugin and a new build (see `docs/ACCOUNTS.md`).
+- Signing in or registering links this phone to the account, so the admin sees the person's name and calculation history. Nothing is linked if statistics sharing is off.
