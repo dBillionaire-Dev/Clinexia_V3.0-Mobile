@@ -27,7 +27,7 @@ Clinexia (formerly Clinexia) started as a laboratory conversion tool and grew in
 
 | Area | What you get |
 |---|---|
-| **Calculators** | **155** in **11** categories: General, Renal, Clinical Chemistry, Hematology, Microbiology, Laboratory Solutions, Spectrophotometry, Drug Dosing, Oncology, Cardiovascular, Stem Cell & Transplant |
+| **Calculators** | **162** in **11** categories: General, Renal, Clinical Chemistry, Hematology, Microbiology, Laboratory Solutions, Spectrophotometry, Drug Dosing, Oncology, Cardiovascular, Stem Cell & Transplant |
 | **Drug dosing** | **57** dosing tools in five groups (General Dosing, Antimalarial, Antibiotic, Renal Adjustment, Therapeutic Drug Monitoring). Single-drug tools show the dose in **mg** and, when you enter the product strength, the volume in **mL** per dose |
 | **Estimators** | 15 tools that estimate a value from an equation (eGFR, body surface area, ideal weight, osmolality and more) |
 | **Conversions** | 9 categories: mass, volume, length, temperature, pressure, energy, time, mass concentration, molar concentration |

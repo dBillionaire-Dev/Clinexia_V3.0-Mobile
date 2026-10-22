@@ -25,7 +25,7 @@ export function OrganisationScreen() {
   const orgId = q?.get("org") ?? ""
   const [d, setD] = useState<Dash | null | undefined>(undefined)
   const [error, setError] = useState("")
-  const [links, setLinks] = useState<Array<{ email: string; link: string }>>([])
+  const [links, setLinks] = useState<Array<{ email: string; link: string; emailed?: boolean }>>([])
   const [skipped, setSkipped] = useState<Array<{ email: string; reason: string }>>([])
   const [invite, setInvite] = useState({ emails: "", role: "staff", all: true, specialties: [] as Specialty[] })
   const [busy, setBusy] = useState(false)
@@ -104,8 +104,9 @@ export function OrganisationScreen() {
           )}
           {links.length > 0 && (
             <div className="card space-y-2 p-3 text-sm">
-              <p className="font-black">Send these private links (shown once; each works only for the invited email):</p>
-              {links.map((l) => <div key={l.email} className="space-y-1"><span className="muted block text-xs">{l.email}</span><input readOnly className="field !py-2 text-xs" value={l.link} onFocus={(e) => e.currentTarget.select()} /><button type="button" className="pill" onClick={() => copy(l.link)}>{copied === l.link ? "Copied" : "Copy link"}</button></div>)}
+              {links.some((l) => l.emailed) && <p className="font-black">Invitation emailed to: {links.filter((l) => l.emailed).map((l) => l.email).join(", ")}</p>}
+              {links.some((l) => !l.emailed) && <p className="font-black">We could not email these people. Send their private links yourself (shown once; each works only for the invited email):</p>}
+              {links.filter((l) => !l.emailed).map((l) => <div key={l.email} className="space-y-1"><span className="muted block text-xs">{l.email}</span><input readOnly className="field !py-2 text-xs" value={l.link} onFocus={(e) => e.currentTarget.select()} /><button type="button" className="pill" onClick={() => copy(l.link)}>{copied === l.link ? "Copied" : "Copy link"}</button></div>)}
             </div>
           )}
           {skipped.length > 0 && <ul className="muted text-sm">{skipped.map((x) => <li key={x.email}>{x.email}: {x.reason}</li>)}</ul>}
