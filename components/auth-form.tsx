@@ -7,6 +7,7 @@ import { notifySessionChanged } from "@/lib/billing/session"
 import { setTokens, takeAuthNotice, type TokenSession } from "@/lib/billing/tokens"
 import { BACKGROUND, rolesFor } from "@/lib/feedback/questions"
 import { PasswordInput } from "./password-input"
+import { ForgotPassword } from "./forgot-password"
 
 /** Sign in or create an account. Signing in stores the sign-in on this phone; signing up that needs email confirmation calls onNeedsConfirmation. */
 export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }: { initialMode: "login" | "signup"; onDone: () => void; onNeedsConfirmation: (email: string) => void; onSwitch: (m: "login" | "signup") => void }) {
@@ -17,6 +18,7 @@ export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }:
   const [error, setError] = useState("")
   const [code, setCode] = useState<number | null>(null)
   const [notice, setNotice] = useState("")
+  const [forgot, setForgot] = useState(false)
   useEffect(() => { const n = takeAuthNotice(); if (n) setNotice(n) }, [])
   const set = (k: keyof typeof f, v: string) => setF((cur) => ({ ...cur, [k]: v, ...(k === "background" ? { role: "" } : {}) }))
 
@@ -37,6 +39,8 @@ export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }:
     setCode(200)
     setError("The Clinexia server did not send back a sign-in. It probably needs its latest update. Please try again later.")
   }
+
+  if (forgot) return <ForgotPassword initialEmail={f.email} onBack={() => setForgot(false)} />
 
   if (mode === "signup" && !type) {
     return (
@@ -71,7 +75,7 @@ export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }:
       )}
       {error && <p role="alert" className="text-sm font-semibold text-red-600">{error}{code !== null && code !== 0 && code !== 401 ? <span className="muted block text-xs font-normal">Error code {code}</span> : null}</p>}
       <button type="submit" className="primary" disabled={busy}>{busy ? <Loader2 size={18} className="mx-auto animate-spin" /> : mode === "login" ? "Sign in" : "Create account"}</button>
-      <div className="flex flex-wrap gap-4 text-sm"><button type="button" className="underline" onClick={() => { setType(null); onSwitch(mode === "login" ? "signup" : "login") }}>{mode === "login" ? "Create an account" : "I already have an account"}</button>{mode === "signup" && <button type="button" className="underline" onClick={() => setType(null)}>Back</button>}</div>
+      <div className="flex flex-wrap gap-4 text-sm"><button type="button" className="underline" onClick={() => { setType(null); onSwitch(mode === "login" ? "signup" : "login") }}>{mode === "login" ? "Create an account" : "I already have an account"}</button>{mode === "login" && <button type="button" className="underline" onClick={() => { setForgot(true); setError("") }}>Forgot password?</button>}{mode === "signup" && <button type="button" className="underline" onClick={() => setType(null)}>Back</button>}</div>
     </form>
   )
 }
