@@ -9,12 +9,14 @@ import { ORGANISATION_TYPES, SPECIALTY_LABELS, type Specialty } from "@/lib/bill
 import { notifySessionChanged, signOutNow, useAccountSession } from "@/lib/billing/session"
 import { NotificationsCard } from "./notifications-card"
 import { PlanPicker } from "./plan-picker"
+import { ProfileSettings, type ProfileData } from "./profile-settings"
 
 type Me = {
-  user: { id: string; email: string }; market: "ng" | "intl"
+  user: { id: string; email: string; avatarUrl?: string; avatarSource?: "upload" | "google" }; profile?: ProfileData | null; market: "ng" | "intl"
   entitlements: { all: boolean; specialties: Specialty[] }
   subscription: { plan: string; specialties: Specialty[]; status: string; currentPeriodEnd: string | null; cancelAtPeriodEnd: boolean } | null
   organisations: Array<{ orgId: string; role: string; name: string }>
+  payments?: boolean; trialEndsAt?: string | null
 }
 
 function CreateOrganisation({ onCreated }: { onCreated: (orgId: string) => void }) {
@@ -87,11 +89,14 @@ export function AccountScreen() {
         <h2 className="font-black">What you can use</h2>
         <p className="muted text-sm">Free calculators and tools are always available.</p>
         <p className="text-sm font-semibold">{me.entitlements.all ? "All premium specialties." : me.entitlements.specialties.length ? me.entitlements.specialties.map((x) => SPECIALTY_LABELS[x]).join(", ") : "No premium specialties yet."}</p>
+        {me.trialEndsAt && <p className="text-sm font-black">Free trial: full access until {new Date(me.trialEndsAt).toLocaleDateString()}.</p>}
         {sub && <p className="muted text-xs">Your plan: {sub.plan === "all_access" ? "all-access" : sub.specialties.map((x) => SPECIALTY_LABELS[x]).join(", ")} · {sub.status}{sub.currentPeriodEnd ? ` · paid until ${new Date(sub.currentPeriodEnd).toLocaleDateString()}` : ""}{sub.cancelAtPeriodEnd ? " · will not continue" : ""}</p>}
         {sub && (sub.status === "active" || sub.status === "grace") && !sub.cancelAtPeriodEnd && (
           <button className="muted text-xs underline" onClick={async () => { if (await confirmDialog({ title: "Stop your plan?", description: "You keep access until the end of the month you have paid for. It will not renew.", confirmLabel: "Stop plan", destructive: true })) { await apiCall("/api/billing/cancel", { body: {} }); void load() } }}>Cancel at the end of the paid period</button>
         )}
       </section>
+
+      <ProfileSettings key={`${me.user.avatarUrl ?? ""}|${me.profile?.fullName ?? ""}`} email={me.user.email} avatarUrl={me.user.avatarUrl} avatarSource={me.user.avatarSource} profile={me.profile ?? null} onChanged={() => void load()} />
 
       <NotificationsCard />
 
@@ -104,7 +109,7 @@ export function AccountScreen() {
         </section>
       )}
 
-      <section className="space-y-3"><h2 className="font-black">{sub ? "Change or renew your plan" : "Choose a plan"}</h2><PlanPicker kind="individual" onPaid={() => void load()} /></section>
+      {me.payments && <section className="space-y-3"><h2 className="font-black">{sub ? "Change or renew your plan" : "Choose a plan"}</h2><PlanPicker kind="individual" onPaid={() => void load()} /></section>}
 
       <section className="space-y-3">
         <h2 className="font-black">Set up an organisation</h2>

@@ -4,7 +4,7 @@ import { Loader2 } from "lucide-react"
 import { apiCall } from "@/lib/billing/api"
 import { SPECIALTIES, SPECIALTY_LABELS, formatMoney, type Quote, type Specialty } from "@/lib/billing/config"
 import { checkPendingPayment, pendingPayment, rememberPendingPayment, type PaymentCheck } from "@/lib/billing/payments"
-import { notifySessionChanged } from "@/lib/billing/session"
+import { notifySessionChanged, useAccountSession } from "@/lib/billing/session"
 import { openExternal } from "@/lib/native"
 
 type Plan = "specialty" | "all_access"
@@ -16,6 +16,7 @@ export function PlanPicker({ kind, orgId, minSeats = 1, onPaid }: { kind: "indiv
   const [seats, setSeats] = useState(Math.max(1, minSeats))
   const [quote, setQuote] = useState<Quote | null>(null)
   const [error, setError] = useState("")
+  const session = useAccountSession()
   const [paying, setPaying] = useState(false)
   const [waiting, setWaiting] = useState<boolean>(false)
   const [status, setStatus] = useState<PaymentCheck | "">("")
@@ -52,6 +53,8 @@ export function PlanPicker({ kind, orgId, minSeats = 1, onPaid }: { kind: "indiv
     if (result === "paid") { setWaiting(false); notifySessionChanged(); onPaid?.() }
     if (result === "failed") setWaiting(false)
   }
+
+  if (!session.payments) return null // payments are hidden until the administrator introduces them
 
   return (
     <div className="space-y-4">

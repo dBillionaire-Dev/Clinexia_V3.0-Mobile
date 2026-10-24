@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react"
 import Link from "next/link"
 import { ClipboardList, LogIn, LogOut, User, UserPlus } from "lucide-react"
 import { notifySessionChanged, signOutNow, useAccountSession } from "@/lib/billing/session"
+import { UserAvatar } from "./user-avatar"
 import { ARRIVED_EVENT, OPEN_EVENT, usePendingCampaigns } from "@/lib/campaigns/store"
 
 /**
@@ -49,7 +50,7 @@ export function AccountMenu() {
         onClick={() => setOpen((o) => !o)}
         className={`relative grid h-9 w-9 place-items-center rounded-xl text-white/95 transition-transform hover:bg-white/10 ${pulse ? "scale-110" : ""}`}
       >
-        {s.signedIn && initial ? <span className="grid h-7 w-7 place-items-center rounded-full bg-white text-xs font-black text-[#073a68]">{initial}</span> : <User size={22} />}
+        {s.signedIn && initial ? <UserAvatar url={s.avatarUrl} initial={initial} size={28} /> : <User size={22} />}
         {count > 0 && (
           <span aria-hidden className="absolute right-0.5 top-0.5 grid h-4 w-4 place-items-center">
             {pulse && <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-red-400/70" />}

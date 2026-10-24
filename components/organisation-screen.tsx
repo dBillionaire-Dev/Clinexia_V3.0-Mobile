@@ -8,14 +8,15 @@ import { apiCall } from "@/lib/billing/api"
 import { SPECIALTIES, SPECIALTY_LABELS, type Specialty } from "@/lib/billing/config"
 import { useQuery } from "@/lib/billing/use-query"
 import { PlanPicker } from "./plan-picker"
+import { OrgDirectory, type Group } from "./org-directory"
 
-type Member = { userId: string; email: string; fullName: string; role: "owner" | "admin" | "staff"; allSpecialties: boolean; specialties: Specialty[] }
+type Member = { userId: string; email: string; fullName: string; role: "owner" | "admin" | "staff"; allSpecialties: boolean; specialties: Specialty[]; groupId?: string | null; disabled?: boolean; managed?: boolean }
 type Invite = { id: string; email: string; role: string; expiresAt: string }
 type Dash = {
   org: { id: string; name: string; managedStatus: string; suspended: boolean }
   role: "owner" | "admin" | "staff"; subscriptionStatus: string
   plan: { plan: "specialty" | "all_access"; specialties: Specialty[]; currentPeriodEnd: string | null } | null
-  members: Member[]; invitations: Invite[]; seats: { label: string }
+  members: Member[]; groups?: Group[]; invitations: Invite[]; seats: { label: string }
 }
 const manages = (actor: Dash["role"], target: Member["role"]) => target !== "owner" && (actor === "owner" || (actor === "admin" && target === "staff"))
 
@@ -25,6 +26,7 @@ export function OrganisationScreen() {
   const orgId = q?.get("org") ?? ""
   const [d, setD] = useState<Dash | null | undefined>(undefined)
   const [error, setError] = useState("")
+  const [notice, setNotice] = useState("")
   const [links, setLinks] = useState<Array<{ email: string; link: string; emailed?: boolean }>>([])
   const [skipped, setSkipped] = useState<Array<{ email: string; reason: string }>>([])
   const [invite, setInvite] = useState({ emails: "", role: "staff", all: true, specialties: [] as Specialty[] })
@@ -40,7 +42,7 @@ export function OrganisationScreen() {
 
   const act = async (body: Record<string, unknown>, ask?: Parameters<typeof confirmDialog>[0]) => {
     if (ask && !(await confirmDialog(ask))) return null
-    setError("")
+    setError(""); setNotice("")
     const r = await apiCall<any>("/api/billing/org", { body: { orgId, ...body } })
     if (!r.ok) setError(r.error); else await load()
     return r
@@ -70,16 +72,20 @@ export function OrganisationScreen() {
         {d.subscriptionStatus === "grace" && <p role="status" className="mt-2 rounded-xl border border-amber-300 bg-amber-50 p-2 text-sm text-amber-900">Your subscription has ended. Access continues for a short grace period. Renew to keep it.</p>}
       </header>
       {error && <p role="alert" className="text-sm font-semibold text-red-600">{error}</p>}
+      {notice && <p role="status" className="text-sm font-semibold">{notice}</p>}
 
       <section className="space-y-2">
         <h2 className="font-black">{isManager ? "Members" : "Your access"}</h2>
         <ul className="card divide-y divide-[color:var(--line)]">
           {d.members.map((m) => (
             <li key={m.userId} className="space-y-1 p-3 text-sm">
-              <div className="flex items-start justify-between gap-2"><span className="min-w-0"><span className="block truncate font-bold">{m.fullName || m.email || "—"}</span><span className="muted block truncate text-xs">{m.email} · {m.role}</span></span></div>
+              <div className="flex items-start justify-between gap-2"><span className="min-w-0"><span className="block truncate font-bold">{m.fullName || m.email || "—"}</span><span className="muted block truncate text-xs">{m.email} · {m.role}{m.groupId ? ` · ${(d.groups ?? []).find((g) => g.id === m.groupId)?.name ?? ""}` : ""}</span></span>{m.disabled && <span className="rounded bg-amber-100 px-1.5 py-0.5 text-xs font-bold text-amber-900">Disabled</span>}</div>
               <p className="muted text-xs">{m.allSpecialties ? "Everything the plan covers" : m.specialties.map((x) => SPECIALTY_LABELS[x]).join(", ") || "None"}</p>
               {isManager && manages(d.role, m.role) && (
-                <div className="flex gap-4 pt-1 text-xs font-bold">
+                <div className="flex flex-wrap gap-x-4 gap-y-1 pt-1 text-xs font-bold">
+                  <select aria-label={`Group of ${m.fullName || m.email}`} className="rounded-lg border border-[color:var(--line)] bg-transparent px-1 py-0.5" value={m.groupId ?? ""} onChange={(e) => act({ action: "setGroup", userId: m.userId, groupId: e.target.value })}><option value="">No group</option>{(d.groups ?? []).map((g) => <option key={g.id} value={g.id}>{g.name}</option>)}</select>
+                  <button className="underline" onClick={() => act({ action: "setDisabled", userId: m.userId, disabled: !m.disabled }, m.disabled ? undefined : { title: `Disable ${m.fullName || m.email}?`, description: "They lose the access this organisation gives them until you enable them again. They keep their seat.", confirmLabel: "Disable", destructive: true })}>{m.disabled ? "Enable" : "Disable"}</button>
+                  {m.managed && <button className="underline" onClick={async () => { const r = await act({ action: "resetMemberPassword", userId: m.userId }, { title: `Email ${m.email} a password link?`, description: "They get an email to choose a new password. You never see their password.", confirmLabel: "Send email" }); if (r?.ok) setNotice(`Password email sent to ${m.email}.`) }}>Send password email</button>}
                   <button className="underline" onClick={() => act({ action: "setSpecialties", userId: m.userId, allSpecialties: !m.allSpecialties, specialties: m.allSpecialties ? assignable.slice(0, 1) : [] })}>{m.allSpecialties ? "Limit access" : "Give full plan access"}</button>
                   <button className="text-red-600 underline" onClick={() => act({ action: "remove", userId: m.userId }, { title: `Remove ${m.fullName || m.email}?`, description: "They lose access straight away and their seat is freed.", confirmLabel: "Remove", destructive: true })}>Remove</button>
                 </div>
@@ -89,6 +95,8 @@ export function OrganisationScreen() {
         </ul>
         {d.role !== "owner" && <button className="pill w-full py-3" onClick={async () => { const r = await act({ action: "leave" }, { title: "Leave this organisation?", description: "You will lose the access it gave you. An administrator can invite you again.", confirmLabel: "Leave", destructive: true }); if (r?.ok) router.push("/account") }}>Leave organisation</button>}
       </section>
+
+      {isManager && active && <OrgDirectory role={d.role} groups={d.groups ?? []} act={act} />}
 
       {isManager && (
         <section className="space-y-3">
