@@ -1,9 +1,9 @@
 {
-  "versionCode": 40005,
-  "versionName": "4.0.5",
-  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.5/Clinexia-4.0.5.apk",
-  "sha256": "b9bec59096ca9bc7e947c505f6a6ca9d34315ad3e859acd7fa13e4f635d21aed",
-  "releaseNotes": "What changed (Clinexia now keeps you informed by email\n\nInvitations: when you invite staff to your organisation, Clinexia emails each person a private invitation link. The invite screen shows who was emailed. If an email can’t be delivered, you’ll still get that person’s link to share yourself.\nPayment receipts: after each successful payment, you’ll receive a receipt with the amount, plan, reference and the date your plan runs until.\nPlan reminders: a few days before your plan ends, we’ll send a reminder. Plans don’t renew automatically, and renewing the same plan early adds a month after your current end date, so nothing is lost.\n\nGood to know\n\nEmails come from Clinexia, so check your spam folder if one doesn’t arrive.\nInvitation links work only for the email address they were sent to, and they expire.\nReceipts and reminders start working for everyone once the web update is live, even before they update the app. Updating the app only improves the invite screen.)",
+  "versionCode": 40006,
+  "versionName": "4.0.6",
+  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.6/Clinexia-4.0.6.apk",
+  "sha256": "3a466b6c3cdd2ca4211b9de5a4d91c999c0cd695c9684a2ded1e6b7733d00d80",
+  "releaseNotes": "What changed (Account: people can change their name and role, change their password, and upload a profile photo (2 MB limit) that replaces the initial on the profile icon.\nPasswords: “Forgot password?” emails a reset link and says plainly if the email isn’t registered.)",
   "minSupportedVersion": 0,
   "mandatory": false
 }
