@@ -1,18 +1,20 @@
-// Guest allowance: a person who is not signed in gets GUEST_CALC_LIMIT calculations on this phone. Only active while the Clinexia
-// server says premium locking is on. A front-end limit: clearing the app's data resets it.
+// Guest allowance: a person who is not signed in gets GUEST_CALC_LIMIT calculations on this phone. Active while the Clinexia
+// server requires an account (admin setting, or premium locking). A front-end limit: clearing the app's data resets it.
 export const GUEST_CALC_LIMIT = 3
 export const GUEST_KEY = "clinexia:guest-calcs"
 export const SESSION_STATE_KEY = "clinexia:session-state"
 
 export interface StorageLike { getItem(key: string): string | null; setItem(key: string, value: string): void }
-export interface SessionState { enforced: boolean; signedIn: boolean }
+// guestLimit: the administrator requires an account after GUEST_CALC_LIMIT free calculations. Older saved states only have `enforced`, which meant the same thing.
+export interface SessionState { enforced: boolean; guestLimit?: boolean; signedIn: boolean }
+export const guestLimitOn = (s: SessionState | null) => Boolean(s && (s.guestLimit ?? s.enforced))
 
 export function readSessionState(s: StorageLike): SessionState | null {
   try {
     const raw = s.getItem(SESSION_STATE_KEY)
     if (!raw) return null
     const j = JSON.parse(raw)
-    return typeof j?.enforced === "boolean" && typeof j?.signedIn === "boolean" ? { enforced: j.enforced, signedIn: j.signedIn } : null
+    return typeof j?.enforced === "boolean" && typeof j?.signedIn === "boolean" ? { enforced: j.enforced, signedIn: j.signedIn, ...(typeof j.guestLimit === "boolean" ? { guestLimit: j.guestLimit } : {}) } : null
   } catch { return null }
 }
 export function writeSessionState(s: StorageLike, state: SessionState): void {
@@ -24,7 +26,7 @@ export function readGuestCount(s: StorageLike): number {
     return Number.isFinite(n) && n > 0 ? Math.min(n, GUEST_CALC_LIMIT) : 0
   } catch { return 0 }
 }
-export const isGuestLimited = (state: SessionState | null, count: number) => Boolean(state && state.enforced && !state.signedIn && count >= GUEST_CALC_LIMIT)
+export const isGuestLimited = (state: SessionState | null, count: number) => Boolean(state && guestLimitOn(state) && !state.signedIn && count >= GUEST_CALC_LIMIT)
 
 export interface GuestTally { counted: boolean; count: number; limit: number; remaining: number; limited: boolean }
 
@@ -32,7 +34,7 @@ export function noteGuestCalculation(s: StorageLike): GuestTally {
   const state = readSessionState(s)
   const count = readGuestCount(s)
   const base = { limit: GUEST_CALC_LIMIT, count, remaining: Math.max(0, GUEST_CALC_LIMIT - count), limited: isGuestLimited(state, count) }
-  if (!state || !state.enforced || state.signedIn || count >= GUEST_CALC_LIMIT) return { ...base, counted: false }
+  if (!state || !guestLimitOn(state) || state.signedIn || count >= GUEST_CALC_LIMIT) return { ...base, counted: false }
   const next = count + 1
   try { s.setItem(GUEST_KEY, String(next)) } catch { return { ...base, counted: false } }
   return { counted: true, count: next, limit: GUEST_CALC_LIMIT, remaining: GUEST_CALC_LIMIT - next, limited: next >= GUEST_CALC_LIMIT }

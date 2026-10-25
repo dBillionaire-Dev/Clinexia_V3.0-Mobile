@@ -10,7 +10,7 @@ const EXEMPT = /^\/(login|register|account)(\/|$)/
 const FIELDS = 'input,textarea,select,button,[contenteditable="true"],[role="button"],[role="switch"],[role="checkbox"],[role="radio"],[role="tab"]'
 
 /**
- * While premium locking is on, a signed-out person gets GUEST_CALC_LIMIT calculations on this phone. After that the screen is
+ * While an account is required (admin setting, or premium locking), a signed-out person gets GUEST_CALC_LIMIT calculations on this phone. After that the screen is
  * browse-only: links still work, anything else asks them to create an account.
  */
 export function GuestGuard() {
@@ -20,7 +20,7 @@ export function GuestGuard() {
   const [count, setCount] = useState(0)
   const [note, setNote] = useState("")
   const open = useRef(false)
-  const active = !s.loading && s.enabled && isGuestLimited({ enforced: s.enforced, signedIn: s.signedIn }, count) && !EXEMPT.test(pathname)
+  const active = !s.loading && s.enabled && isGuestLimited({ enforced: s.enforced, guestLimit: s.guestLimit, signedIn: s.signedIn }, count) && !EXEMPT.test(pathname)
 
   const ask = useCallback(async (title: string) => {
     if (open.current) return

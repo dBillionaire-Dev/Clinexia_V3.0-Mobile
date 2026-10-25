@@ -26,6 +26,9 @@ export function ProfileSettings({ email, avatarUrl, avatarSource, profile, onCha
   const [pw, setPw] = useState({ current: "", next: "", again: "" })
   const [pwBusy, setPwBusy] = useState(false)
   const [pwError, setPwError] = useState("")
+  const [del, setDel] = useState({ password: "", typed: "" })
+  const [delBusy, setDelBusy] = useState(false)
+  const [delError, setDelError] = useState("")
   const initial = (profile?.fullName || email).trim().charAt(0).toUpperCase()
 
   async function choose(e: React.ChangeEvent<HTMLInputElement>) {
@@ -60,6 +63,15 @@ export function ProfileSettings({ email, avatarUrl, avatarSource, profile, onCha
     const r = await apiCall("/api/account/password", { body: { current: pw.current, next: pw.next } })
     if (r.ok) { clearTokens(); setAuthNotice("Your password was changed. Sign in with the new password."); notifySessionChanged(); router.push("/login"); return }
     setPwBusy(false); setPwError(r.error)
+  }
+
+  async function deleteAccount(e: React.FormEvent) {
+    e.preventDefault()
+    if (!(await confirmDialog({ title: "Delete your account?", description: "You will be signed out everywhere and your account will be booked for deletion. You can still restore it by signing in within 7 days.", confirmLabel: "Delete my account", destructive: true }))) return
+    setDelBusy(true); setDelError("")
+    const r = await apiCall("/api/account/delete", { body: { password: del.password, confirm: true } })
+    if (r.ok) { clearTokens(); setAuthNotice("Your account has been deleted. If you change your mind, sign in within 7 days and choose Restore my account."); notifySessionChanged(); router.push("/login"); return }
+    setDelBusy(false); setDelError(r.error)
   }
 
   return (
@@ -106,6 +118,15 @@ export function ProfileSettings({ email, avatarUrl, avatarSource, profile, onCha
         <p className="muted text-xs">You will be signed out everywhere and sign in again with the new password.</p>
         {pwError && <p role="alert" className="text-sm font-semibold text-red-600">{pwError}</p>}
         <button className="primary" disabled={pwBusy}>{pwBusy ? <Loader2 size={18} className="mx-auto animate-spin" /> : "Change password"}</button>
+      </form>
+
+      <form onSubmit={deleteAccount} className="card space-y-3 border border-red-300 p-4">
+        <h2 className="font-black text-red-700">Delete your account</h2>
+        <p className="muted text-xs">You will be signed out everywhere and your account will be booked for deletion. If you change your mind, sign in within 7 days and choose “Restore my account”. After that it cannot be restored from the app. A paid plan is not refunded.</p>
+        <label className="block"><span className={label}>Your password</span><PasswordInput value={del.password} onChange={(e) => setDel({ ...del, password: e.target.value })} autoComplete="current-password" required /></label>
+        <label className="block"><span className={label}>Type DELETE to confirm</span><input className="field" value={del.typed} onChange={(e) => setDel({ ...del, typed: e.target.value })} autoComplete="off" required /></label>
+        {delError && <p role="alert" className="text-sm font-semibold text-red-600">{delError}</p>}
+        <button className="primary" disabled={delBusy || del.typed !== "DELETE" || !del.password}>{delBusy ? <Loader2 size={18} className="mx-auto animate-spin" /> : "Delete my account"}</button>
       </form>
     </div>
   )
