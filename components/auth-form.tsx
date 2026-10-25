@@ -19,17 +19,19 @@ export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }:
   const [code, setCode] = useState<number | null>(null)
   const [notice, setNotice] = useState("")
   const [forgot, setForgot] = useState(false)
+  const [restorable, setRestorable] = useState(false)
   useEffect(() => { const n = takeAuthNotice(); if (n) setNotice(n) }, [])
   const set = (k: keyof typeof f, v: string) => setF((cur) => ({ ...cur, [k]: v, ...(k === "background" ? { role: "" } : {}) }))
 
-  async function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent, restore = false) {
     e.preventDefault()
-    setBusy(true); setError(""); setCode(null)
+    setBusy(true); setError(""); setCode(null); setRestorable(false)
     const r = mode === "login"
-      ? await apiCall<{ session?: TokenSession }>("/api/account/login", { auth: false, body: { email: f.email, password: f.password, ...deviceFields() } })
+      ? await apiCall<{ session?: TokenSession }>("/api/account/login", { auth: false, body: { email: f.email, password: f.password, ...(restore ? { restore: true } : {}), ...deviceFields() } })
       : await apiCall<{ signedIn?: boolean; session?: TokenSession }>("/api/account/signup", { auth: false, body: { ...f, accountType: type, ...deviceFields() } })
     setBusy(false)
     if (!r.ok) {
+      setRestorable(r.status === 410) // a deleted account that can still be restored
       setCode(r.status)
       return setError(r.status === 404 ? "The Clinexia server does not have accounts switched on yet. Please try again later." : r.error)
     }
@@ -74,6 +76,7 @@ export function AuthForm({ initialMode, onDone, onNeedsConfirmation, onSwitch }:
         </>
       )}
       {error && <p role="alert" className="text-sm font-semibold text-red-600">{error}{code !== null && code !== 0 && code !== 401 ? <span className="muted block text-xs font-normal">Error code {code}</span> : null}</p>}
+      {restorable && <button type="button" className="pill" disabled={busy} onClick={(e) => submit(e as unknown as React.FormEvent, true)}>Restore my account</button>}
       <button type="submit" className="primary" disabled={busy}>{busy ? <Loader2 size={18} className="mx-auto animate-spin" /> : mode === "login" ? "Sign in" : "Create account"}</button>
       <div className="flex flex-wrap gap-4 text-sm"><button type="button" className="underline" onClick={() => { setType(null); onSwitch(mode === "login" ? "signup" : "login") }}>{mode === "login" ? "Create an account" : "I already have an account"}</button>{mode === "login" && <button type="button" className="underline" onClick={() => { setForgot(true); setError("") }}>Forgot password?</button>}{mode === "signup" && <button type="button" className="underline" onClick={() => setType(null)}>Back</button>}</div>
     </form>
