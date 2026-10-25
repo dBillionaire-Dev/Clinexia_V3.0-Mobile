@@ -1,9 +1,9 @@
 {
-  "versionCode": 40006,
-  "versionName": "4.0.6",
-  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.6/Clinexia-4.0.6.apk",
-  "sha256": "3a466b6c3cdd2ca4211b9de5a4d91c999c0cd695c9684a2ded1e6b7733d00d80",
-  "releaseNotes": "What changed (Account: people can change their name and role, change their password, and upload a profile photo (2 MB limit) that replaces the initial on the profile icon.\nPasswords: “Forgot password?” emails a reset link and says plainly if the email isn’t registered.)",
+  "versionCode": 40007,
+  "versionName": "4.0.7",
+  "apkUrl": "https://github.com/dBillionaire-Dev/Clinexia_V3.0-Mobile/releases/download/v4.0.7/Clinexia-4.0.7.apk",
+  "sha256": "f5630b0e47398eef19dd83a2948778412d927d99e4d6d1287402932bcbb068b7",
+  "releaseNotes": "What changed (Account: users can now modify and delete their accounts from the comfort of the android app)",
   "minSupportedVersion": 0,
   "mandatory": false
 }
